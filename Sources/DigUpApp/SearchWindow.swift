@@ -47,6 +47,7 @@ final class SearchWindowController: NSObject, NSWindowDelegate {
         window.titlebarAppearsTransparent = true
         window.titleVisibility = .hidden
         window.title = "DigUp Atlas"
+        window.setAccessibilityIdentifier("digupatlas.searchWindow")
         window.minSize = NSSize(width: 820, height: 520)
         window.isReleasedWhenClosed = false
         window.delegate = self
@@ -372,7 +373,10 @@ struct SearchWindowView: View {
                         .foregroundStyle(Brand.gradient)
                         .frame(width: 22)
                     SearchField(text: $search.query, fontSize: 18, placeholder: placeholder,
-                                onMake: { search.field = $0 }, onFocus: { fieldFocused = $0 })
+                                onMake: { field in
+                                    field.setAccessibilityIdentifier("digupatlas.searchField")
+                                    search.field = field
+                                }, onFocus: { fieldFocused = $0 })
                     if !search.query.isEmpty {
                         Button {
                             search.query = ""
@@ -464,6 +468,7 @@ struct SearchWindowView: View {
             Spacer()
             if search.hasResults, !search.query.isEmpty {
                 Text(model.resultsCaveat ?? resultCount).lineLimit(1)
+                    .accessibilityIdentifier("digupatlas.resultCount")
             }
         }
         .font(.system(size: 11))
