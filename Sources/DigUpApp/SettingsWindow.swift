@@ -126,7 +126,6 @@ final class SettingsState {
     private(set) var codeIndexSize: Int64 = 0
     var launchAtLogin = false
     var loginProblem: String?
-    var checksForUpdates = false
     @ObservationIgnored let app: AppController
     @ObservationIgnored var selectTab: (SettingsTab) -> Void = { _ in }
     @ObservationIgnored var addFolders: () -> Void = {}
@@ -144,7 +143,6 @@ final class SettingsState {
     func refresh() async {
         lastRefresh = Date()
         launchAtLogin = app.launchesAtLogin
-        checksForUpdates = app.updates.automaticallyChecks
         indexSize = app.engine.indexSize
         codeIndexSize = app.engine.codeIndexSize
         codeSummaries = await app.engine.rootSummaries(code: true)
@@ -228,27 +226,6 @@ private struct GeneralSettings: View {
                             .font(.system(size: 11))
                             .foregroundStyle(state.loginProblem == nil ? AnyShapeStyle(.secondary) : AnyShapeStyle(.red))
                     }
-                }
-            }
-            Section {
-                Toggle(isOn: Binding(get: { state.checksForUpdates }, set: { on in
-                    state.app.updates.automaticallyChecks = on
-                    state.checksForUpdates = on
-                })) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Check for updates automatically")
-                        Text("Once a day DigUp Atlas asks GitHub for its newest version; nothing about your files is sent. "
-                             + "Updates install with one click.")
-                            .font(.system(size: 11))
-                            .foregroundStyle(.secondary)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                }
-                LabeledContent {
-                    Button("Check Now") { state.app.updates.checkNow() }
-                } label: {
-                    Text(state.model.updateAvailable.map { "DigUp Atlas \($0) is available" }
-                         ?? "DigUp Atlas \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "")")
                 }
             }
         }
@@ -625,8 +602,7 @@ private struct StorageSettings: View {
             }
             Section("Privacy") {
                 Text("DigUp Atlas reads the folders you choose and keeps what it learns in its index, on this Mac. "
-                     + "It goes online only to download its model, once, and to check for updates (General), "
-                     + "which sends nothing about your files.")
+                     + "It goes online only to download its model, once, which sends nothing about your files.")
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }

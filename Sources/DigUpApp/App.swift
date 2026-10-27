@@ -65,7 +65,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let appMenu = NSMenu()
         appMenu.addItem(withTitle: "About DigUp Atlas", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)),
                         keyEquivalent: "")
-        appMenu.addItem(ActionMenuItem("Check for Updates…") { [weak app] in app?.updates.checkNow() })
         appMenu.addItem(.separator())
         appMenu.addItem(ActionMenuItem("Settings…", key: ",") { [weak app] in app?.showSettings() })
         appMenu.addItem(.separator())

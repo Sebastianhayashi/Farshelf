@@ -8,8 +8,6 @@ final class AppModel {
     var settings: AppSettings
     var hotkey: KeyCombo?
     let download: ModelDownload
-    /// A newer DigUp the daily check found ("0.6.1"), until you open it (`Updates`).
-    var updateAvailable: String?
 
     init(settings: AppSettings, download: ModelDownload) {
         self.settings = settings

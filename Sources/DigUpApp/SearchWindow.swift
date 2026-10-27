@@ -465,16 +465,6 @@ struct SearchWindowView: View {
             if search.hasResults, !search.query.isEmpty {
                 Text(model.resultsCaveat ?? resultCount).lineLimit(1)
             }
-            if let version = model.updateAvailable {
-                Button {
-                    app.updates.checkNow()
-                } label: {
-                    Label("DigUp Atlas \(version) is available", systemImage: "arrow.down.circle.fill")
-                        .foregroundStyle(Brand.ember)
-                }
-                .buttonStyle(.plain)
-                .help("See what's new and update")
-            }
         }
         .font(.system(size: 11))
         .foregroundStyle(.secondary)

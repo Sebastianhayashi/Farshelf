@@ -11,8 +11,9 @@ enum StatusIcon {
         Bundle.main.url(forResource: name, withExtension: "png").flatMap(NSImage.init(contentsOf:))
     }
 
-    /// `update`: a newer version is waiting, a dot at the top right.
-    static func image(progress: Double?, paused: Bool = false, update: Bool = false) -> NSImage {
+    /// While the model downloads or files index, the tiles are dimmed and get their color back in a sweep from the
+    /// top, clockwise, as far as it has come; while indexing is paused, two bars take the D's place.
+    static func image(progress: Double?, paused: Bool = false) -> NSImage {
         let image = NSImage(size: NSSize(width: 18, height: 18), flipped: false) { rect in
             if paused {
                 pausedLogo?.draw(in: rect)
@@ -31,14 +32,6 @@ enum StatusIcon {
             } else {
                 logo?.draw(in: rect)
             }
-            if update {
-                // Cut a gap around it, so it reads as a dot on the logo and not part of it.
-                NSGraphicsContext.current?.compositingOperation = .clear
-                NSBezierPath(ovalIn: NSRect(x: 11.5, y: 11.5, width: 7, height: 7)).fill()
-                NSGraphicsContext.current?.compositingOperation = .sourceOver
-                NSColor.systemRed.setFill()
-                NSBezierPath(ovalIn: NSRect(x: 12.75, y: 12.75, width: 4.5, height: 4.5)).fill()
-            }
             return true
         }
         image.accessibilityDescription = "DigUp Atlas"
@@ -56,10 +49,8 @@ final class StatusMenuController: NSObject, NSMenuDelegate {
     var onSettings: () -> Void = {}
     var onChooseFolders: () -> Void = {}
     var onPauseChanged: (Bool) -> Void = { _ in }
-    var onCheckForUpdates: () -> Void = {}
     private var shownProgress: Double?
     private var shownPaused = false
-    private var shownUpdate = false
 
     init(model: AppModel) {
         self.model = model
@@ -74,7 +65,6 @@ final class StatusMenuController: NSObject, NSMenuDelegate {
         withObservationTracking {
             _ = model.status
             _ = model.progress
-            _ = model.updateAvailable
         } onChange: { [weak self] in
             Task { @MainActor in
                 self?.refreshButton()
@@ -86,12 +76,11 @@ final class StatusMenuController: NSObject, NSMenuDelegate {
     private func refreshButton() {
         guard let button = statusItem.button else { return }
         let progress = model.progress.map { ($0 * 50).rounded() / 50 }   // redraw in 2% steps, not every file
-        let paused = model.status.paused, update = model.updateAvailable != nil
-        if progress != shownProgress || paused != shownPaused || update != shownUpdate || button.image == nil {
-            button.image = StatusIcon.image(progress: progress, paused: paused, update: update)
+        let paused = model.status.paused
+        if progress != shownProgress || paused != shownPaused || button.image == nil {
+            button.image = StatusIcon.image(progress: progress, paused: paused)
             shownProgress = progress
             shownPaused = paused
-            shownUpdate = update
         }
         button.toolTip = "DigUp Atlas — \(model.statusLine)"
     }
@@ -104,10 +93,6 @@ final class StatusMenuController: NSObject, NSMenuDelegate {
         header.view = view
         menu.addItem(header)
         menu.addItem(.separator())
-        if let version = model.updateAvailable {
-            menu.addItem(ActionMenuItem("Update to DigUp Atlas \(version)…") { [weak self] in self?.onCheckForUpdates() })
-            menu.addItem(.separator())
-        }
 
         if !model.hasFolders {
             menu.addItem(ActionMenuItem("Choose Folders to Search…") { [weak self] in self?.onChooseFolders() })
@@ -134,9 +119,6 @@ final class StatusMenuController: NSObject, NSMenuDelegate {
         }
         menu.addItem(.separator())
         menu.addItem(ActionMenuItem("Settings…", key: ",") { [weak self] in self?.onSettings() })
-        if model.updateAvailable == nil {
-            menu.addItem(ActionMenuItem("Check for Updates…") { [weak self] in self?.onCheckForUpdates() })
-        }
         menu.addItem(ActionMenuItem("Quit DigUp Atlas", key: "q") { NSApp.terminate(nil) })
     }
 

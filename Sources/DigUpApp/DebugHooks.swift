@@ -35,7 +35,7 @@ import SwiftUI
 ///     -debugPauseAfter S / -debugResumeAfter S   press Pause / Resume S seconds after launch
 ///     -debugFolders a:b -debugFoldersAfter S     choose these folders S seconds after launch (as Settings would)
 ///     -debugCodeFolders a:b|off -debugCodeFoldersAfter S   the same for code search's folders ("off" turns it off)
-///     -debugIcon <png>        draw the menubar icon idle, at 0%, 42% and 90%, paused, and with an update waiting
+///     -debugIcon <png>        draw the menubar icon idle, at 0%, 42% and 90% and paused, scaled up, black on white
 ///     -debugHotkeyCheck a,b   log what the shortcut recorder would say about each combination ("cmd+space"…)
 ///     -debugMenuView <png>    draw the top of the menu (status, detail, progress) into <png>, after
 ///                             -debugMenuViewAfter seconds
@@ -53,7 +53,6 @@ import SwiftUI
 ///                             open panel), unskip:PATH, types:heic,txt. NAME is the end of a listed folder's path.
 ///     -debugAdd YES           after the snapshot, press Add Folders' Add (or the code sheet's) and log what it applied
 ///     -debugFocus YES         with -debugWindow search: the field has the cursor (its ring shows) in the snapshot
-///     -debugUpdateCheck YES   check for updates in the background a second after launch, as the daily check does
 ///     -debugUseModelFiles a:b take these files as the model, as Use Files… does, a second after launch
 ///     -debugHelperArgs "…"    more arguments for the indexing helper, in dev runs ("--time-limit 0")
 ///     -debugQuitAfter S       log the menu and quit S seconds after launch (a downloaded update installs on quit)
@@ -116,12 +115,6 @@ enum DebugHooks {
             DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
                 log("debug: model files chosen: \(files)")
                 app.model.download.use(files.split(separator: ":").map { URL(fileURLWithPath: String($0)) })
-            }
-        }
-        if defaults.bool(forKey: "debugUpdateCheck") {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-                log("debug: checking for updates in the background")
-                app.updates.checkInBackground()
             }
         }
         if defaults.object(forKey: "debugQuitAfter") != nil {
@@ -209,7 +202,7 @@ enum DebugHooks {
             $0.trimmingCharacters(in: .whitespaces)
         } ?? []
         if !keys.isEmpty {
-            panel.pasteboard = NSPasteboard(name: NSPasteboard.Name("com.abdurrahim.DigUp.debug"))
+            panel.pasteboard = NSPasteboard(name: NSPasteboard.Name("org.digupatlas.app.debug"))
             panel.pasteboard.clearContents()
         }
         let typed = defaults.string(forKey: "debugType")?.split(separator: "|").map(String.init) ?? []
@@ -683,12 +676,11 @@ enum DebugHooks {
         save("menu header", { try Snapshot.write(window, to: $0, cornerRadius: 6) }, to: url)
     }
 
-    /// The menubar icon idle, at a few progress values, paused, and with an update waiting, scaled up, black on white
+    /// The menubar icon idle, at a few progress values and paused, scaled up, black on white
     /// (as a template it takes the bar's color).
     private static func drawIcons(to url: URL) {
-        let states: [(Double?, Bool, Bool)] = [(nil, false, false), (0.0, false, false), (0.42, false, false),
-                                               (0.9, false, false), (nil, true, false), (nil, false, true),
-                                               (0.42, false, true)]
+        let states: [(Double?, Bool)] = [(nil, false), (0.0, false), (0.42, false),
+                                         (0.9, false), (nil, true)]
         let scale: CGFloat = 4, side: CGFloat = 18
         let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: Int(side * scale) * states.count,
                                    pixelsHigh: Int(side * scale), bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true,
@@ -697,8 +689,8 @@ enum DebugHooks {
         NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
         NSColor.white.setFill()
         NSRect(x: 0, y: 0, width: rep.pixelsWide, height: rep.pixelsHigh).fill()
-        for (index, (progress, paused, update)) in states.enumerated() {
-            StatusIcon.image(progress: progress, paused: paused, update: update)
+        for (index, (progress, paused)) in states.enumerated() {
+            StatusIcon.image(progress: progress, paused: paused)
                 .draw(in: NSRect(x: CGFloat(index) * side * scale, y: 0, width: side * scale, height: side * scale))
         }
         NSGraphicsContext.restoreGraphicsState()

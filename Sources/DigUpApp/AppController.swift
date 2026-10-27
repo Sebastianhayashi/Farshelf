@@ -13,7 +13,6 @@ final class AppController {
     let engine: Engine
     let download: ModelDownload
     let hotkeys = HotkeyCenter()
-    let updates: Updates
     private let power: PowerPolicy
     private let schedule: IndexSchedule
     private(set) var panel: SearchPanelController!
@@ -52,7 +51,6 @@ final class AppController {
         self.power = power
         self.schedule = schedule
         self.engine = engine
-        updates = Updates(model: model)
     }
 
     /// `showWindow`: opened by hand (not at login), so the search window comes up once the app is set up.
@@ -66,9 +64,6 @@ final class AppController {
         statusMenu.onSettings = { [weak self] in self?.showSettings() }
         statusMenu.onChooseFolders = { [weak self] in self?.chooseFolders() }
         statusMenu.onPauseChanged = { [weak self] paused in self?.engine.setPaused(paused) }
-        statusMenu.onCheckForUpdates = { [weak self] in self?.updates.checkNow() }
-        updates.onSessionEnded = { [weak self] in self?.windowClosed() }
-        updates.start()
 
         hotkeys.onPress = { [weak self] in
             guard let self else { return }
