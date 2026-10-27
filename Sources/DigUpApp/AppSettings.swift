@@ -3,11 +3,11 @@ import Foundation
 
 /// What to index, where the index and the model live, and the hotkey.
 ///
-/// Saved in the app's defaults domain (com.abdurrahim.DigUp). Launch arguments override any of it without being
+/// Saved in the app's defaults domain (org.digupatlas.app). Launch arguments override any of it without being
 /// saved, which is how tests point the app at the testbed and never at real folders:
 ///
-///     DigUp.app/Contents/MacOS/DigUp -roots ~/DigUpTestbed/real -indexDir <repo>/.dev/app-index \
-///         -modelsDir <repo>/.dev/models -defaultsSuite com.abdurrahim.DigUp.dev
+///     DigUpAtlas.app/Contents/MacOS/DigUpAtlas -roots ~/DigUpTestbed/real -indexDir <repo>/.dev/app-index \
+///         -modelsDir <repo>/.dev/models -defaultsSuite org.digupatlas.app.dev
 ///
 /// `-roots` takes one folder, several joined with ":", or a plist array. `-defaultsSuite` keeps what the app saves
 /// (onboarding's folders, a new hotkey) out of the real settings. With no roots the app indexes nothing and opens

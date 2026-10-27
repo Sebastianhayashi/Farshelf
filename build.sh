@@ -12,7 +12,7 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
-APP_NAME="DigUp"
+APP_NAME="DigUpAtlas"
 # ".noindex" keeps Spotlight (and the Apps list) from showing this staging copy.
 APP="build.noindex/$APP_NAME.app"
 
@@ -45,6 +45,7 @@ xcrun actool --compile "$APP/Contents/Resources" --platform macosx --target-devi
   --development-region en "$PWD/Resources/AppIcon/AppIcon.icon" > /dev/null
 cp "$ICON" "$APP/Contents/Resources/AppIcon.icns"   # over actool's plainer fallback: ours has simplified 16 and 32 px
 cp Resources/Acknowledgements.txt "$APP/Contents/Resources/Acknowledgements.txt"
+cp LICENSE "$APP/Contents/Resources/LICENSE"
 cp Resources/AppIcon/tray.png Resources/AppIcon/tray-dim.png Resources/AppIcon/tray-paused.png "$APP/Contents/Resources/"   # the menubar's logo
 
 # Sparkle (in-app updates): the framework in Frameworks/, where the app's runpath looks. Its XPC services are for
