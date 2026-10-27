@@ -55,7 +55,7 @@ import SwiftUI
 ///     -debugFocus YES         with -debugWindow search: the field has the cursor (its ring shows) in the snapshot
 ///     -debugUseModelFiles a:b take these files as the model, as Use Files… does, a second after launch
 ///     -debugHelperArgs "…"    more arguments for the indexing helper, in dev runs ("--time-limit 0")
-///     -debugQuitAfter S       log the menu and quit S seconds after launch (a downloaded update installs on quit)
+///     -debugQuitAfter S       log the menu and quit S seconds after launch
 ///     -debugWaitForIndex YES  wait for the model and an idle index with nothing waiting, then search for
 ///                             -debugQuery in the panel (<snapshot>-5-panel.png), as -debugOnboarding auto ends
 ///     -debugOnboarding auto   first launch, start to finish: snapshot each onboarding step (<snapshot>-1-welcome.png

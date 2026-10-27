@@ -98,8 +98,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 }
 
-/// How DigUp Atlas was launched. At login (its login item) it stays in the menu bar; opened by hand (Finder, Spotlight,
-/// Launchpad, after an update) it shows its window, so opening it never looks like nothing happened.
+/// How DigUp Atlas was launched. At login (its login item) it stays in the menu bar; opened by hand (Finder, Spotlight
+/// or Launchpad) it shows its window, so opening it never looks like nothing happened.
 enum Launch {
     /// Whether this is the launch at login, and what says so. Call it while the app finishes launching: the
     /// open-application event is still the current one then.

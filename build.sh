@@ -36,7 +36,7 @@ rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Helpers" "$APP/Contents/Resources"
 # The binary is DigUpApp in SwiftPM (it can't share a name with the `digup` CLI on a case-insensitive disk).
 cp "$BIN_DIR/DigUpApp" "$APP/Contents/MacOS/$APP_NAME"
-# The indexing helper lives in Helpers/: next to the app binary in MacOS/ it would collide on a case-insensitive disk.
+# The indexing helper lives in Helpers/: the app starts it as Contents/Helpers/digup (Engine.swift).
 cp "$BIN_DIR/digup" "$APP/Contents/Helpers/digup"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
 xcrun actool --compile "$APP/Contents/Resources" --platform macosx --target-device mac --minimum-deployment-target 14.0 \

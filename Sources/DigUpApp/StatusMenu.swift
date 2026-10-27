@@ -11,8 +11,6 @@ enum StatusIcon {
         Bundle.main.url(forResource: name, withExtension: "png").flatMap(NSImage.init(contentsOf:))
     }
 
-    /// While the model downloads or files index, the tiles are dimmed and get their color back in a sweep from the
-    /// top, clockwise, as far as it has come; while indexing is paused, two bars take the D's place.
     static func image(progress: Double?, paused: Bool = false) -> NSImage {
         let image = NSImage(size: NSSize(width: 18, height: 18), flipped: false) { rect in
             if paused {
