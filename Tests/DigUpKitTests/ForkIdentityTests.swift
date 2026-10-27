@@ -1,6 +1,8 @@
 import Foundation
 import Testing
 
+@testable import DigUpKit
+
 private let repo = URL(fileURLWithPath: #filePath)
     .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
 
@@ -64,6 +66,28 @@ private func sourceFiles() -> [URL] {
                                                    isDirectory: &isFolder) && isFolder.boolValue,
                     "\(dir) is missing")
         }
+    }
+
+    @Test func defaultDataDirectoriesAreIndependent() throws {
+        #if os(macOS)
+        let support = AppPaths.applicationSupport
+        #expect(support.lastPathComponent == "DigUpAtlas",
+                "the default application-support directory is \(support.path), not DigUpAtlas")
+        #expect(support.path != FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("Library/Application Support/DigUp").path)
+        #expect(AppPaths.defaultIndex == support.appendingPathComponent("index.noindex"))
+        #expect(ModelFiles.installed == support.appendingPathComponent("Models"))
+        #endif
+
+        let settings = try String(contentsOf: repo.appendingPathComponent("Sources/DigUpApp/AppSettings.swift"),
+                                  encoding: .utf8)
+        #expect(settings.contains("Library/Application Support/DigUpAtlas"))
+        let portable = try String(contentsOf: repo.appendingPathComponent(
+            "Sources/DigUpKit/Platform/Portable.swift"), encoding: .utf8)
+        #expect(portable.contains("Library/Application Support/DigUpAtlas"))
+        let devRun = try String(contentsOf: repo.appendingPathComponent("scripts/dev-run.sh"), encoding: .utf8)
+        #expect(devRun.contains("org.digupatlas.app.dev"))
+        #expect(!devRun.contains("com.abdurrahim"), "dev-run.sh still defaults to the upstream defaults domain")
     }
 
     @Test func testFixturesAreUnchanged() throws {
