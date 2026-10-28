@@ -76,11 +76,11 @@ The fork is `github.com:Sebastianhayashi/new-digup`, based on upstream
 app identity, isolated data directories, Sparkle removed, UI driver added) is
 committed and pushed. `build.noindex/DigUpAtlas.app` builds. PR #1 is open and
 mergeable; its UI verification has not yet produced `DRIVE PASS`, so D0 is
-submitted, not delivered. D1 is not started. Local `main` equals `origin/main`
-at the upstream commit.
+submitted, not delivered. D1 is not started. `main` is based on that upstream
+commit and now also carries this brief.
 
 Reading the source corrected seven claims that earlier rounds had taken on
-trust. Items 4 and 7 are blocking for D1; the rest are corrections of record.
+trust. Items 3 and 6 are blocking for D1; the rest are corrections of record.
 
 1. **The preview cache does not exist upstream.**
    `Sources/DigUpApp/Thumbnails.swift` is an in-memory `NSCache` documented as
@@ -135,12 +135,12 @@ trust. Items 4 and 7 are blocking for D1; the rest are corrections of record.
    currently defined by path. `segments` references `files(id) ON DELETE
    CASCADE`, and `delete(_:)` issues `DELETE FROM files WHERE id = ?`. If D1
    adds `asset_uuid` as a column on `files` and D2 hangs user tags off it, then
-   any delete of a file row — a genuine deletion, an unreadable subtree from
-   item 3, or a path-UNIQUE collision — destroys the stable identity and orphans
-   every tag bound to it. Asset identity belongs in its own persistent table,
-   with a tombstone for assets that are gone, so derived index rows can be
-   deleted without taking user work with them. This is a hard D1-to-D2
-   dependency and cannot be left to D2.
+   any delete of a file row — a genuine deletion, or an unreadable subtree from
+   item 3 — destroys the stable identity and orphans every tag bound to it.
+   Asset identity belongs in its own persistent table, with a tombstone for
+   assets that are gone, so derived index rows can be deleted without taking
+   user work with them. This is a hard D1-to-D2 dependency and cannot be left
+   to D2.
 
 7. **One earlier claim was wrong in mechanism, and is closed.**
    "DigUp misclassified a personal photo library as a dataset" was a real
@@ -161,6 +161,9 @@ trust. Items 4 and 7 are blocking for D1; the rest are corrections of record.
 
 The D0 review of record is `.audit/D0-review-findings.md`, covering the shared
 data-directory collision, stale update references, and UI-driver weaknesses.
+That file is local only, not committed, so an outside reviewer cannot read it;
+the findings that matter are restated in the prose above rather than left
+behind that reference.
 
 ## Analysis
 
@@ -176,8 +179,10 @@ the success criterion, the architecture, and the test design point at
 different products.
 
 The practical consequence: **if the catalog and the semantic layer ship in the
-same build, no user test can attribute success to either one.** An experiment
-designed to justify the architecture is confounded by it.
+same build with no way to switch one off, no user test can attribute success to
+either one.** An experiment designed to justify the architecture is confounded
+by it. The fix is experimental isolation — a controlled off-switch, a fixed task
+set, and counterbalanced order — not necessarily two builds.
 
 This does not require breaking up the program. D1 and D4 stand on their own as
 a catalog-plus-preview product, and D2 and D3 add asset-map capability on top.
@@ -196,17 +201,20 @@ supportive.
 - The 2 GiB counts only previews. Adding SQLite rows, a full-text index over
   names and paths, vectors, and the model puts total footprint around 4-6 GB
   per million assets. The program's origin story is a full disk.
-- "Shared 2 GiB across all sources" and "no silent cross-drive eviction" are
-  mutually unsatisfiable past one drive: the first consumes the budget and
-  later drives get nothing, permanently.
+- "Shared 2 GiB across all sources" and "no silent cross-drive eviction" are in
+  tension past one drive: the first consumes the budget and later drives get
+  nothing by default. This is solvable — stop generating, show the coverage
+  gap, or let the user rebalance — but the default allocation still has to be
+  chosen against real user needs rather than left implicit.
 
 Nobody has shown that a size-capped preview of a 40-page PDF, or of a folder of
 similarly named photos, is enough for a person to confirm identity. That
 assumption is the whole fallback product, and testing it costs hours.
 
-The plan's current split is workable and should be kept: 2 GiB as a default
-budget shared across sources, 500 MB as the performance ceiling for the
-specified test fixture.
+The budget split proposed here, not yet adopted by the plan: 2 GiB as a
+default shared across sources, 500 MB as the performance ceiling for the
+specified test fixture. The plan currently specifies only a 50 MB over-budget
+test and the 500 MB fixture limit; it does not yet set a default.
 
 ### 3. The differentiator's measurement design cannot produce a decision
 
@@ -236,13 +244,16 @@ This is a caution, not a stop order: D1's inventory work is required regardless
 of how the semantic question resolves, and D4's preview store is required for
 any offline product.
 
-### 5. Search, which is D3, costs more than the plan measures
+### 5. Semantic search exists already; the plan under-measures it at scale
 
-The plan's performance rule for suggestions bounds latency and helper memory.
-It does not bound index size, model load cost, or the memory a resident
-embedding runtime occupies on a low-RAM Mac. Brute-force search over a large
-vector table is a streaming read on every query, and the model is not
-lazily loadable per query. These belong in the same envelope as the rest.
+Meaning search is upstream, not new. `Engine.prewarm()` starts the query
+encoder when the panel opens and reloads vectors in parallel, then drops the
+encoder when idle; a cold start is about 0.35 s. What D3 adds is semantic topic
+*suggestions*, and what the plan does not bound is the scale at which this
+stops working: loading a large vector table on panel open, resident memory on a
+low-RAM Mac, and p95 latency under a realistic corpus. Brute-force comparison
+over a big vector table is a streaming read per query. Those belong in the same
+envelope as the suggestion latency rule.
 
 ### 6. The read-only claim needs precision
 
@@ -250,8 +261,10 @@ The app does not copy originals. It does store thumbnails of every photo and
 extract text from documents: a durable, plaintext, reduced copy of the volume
 inside the user's home directory, and part of Time Machine backups unless
 excluded. For a tool that catalogs other people's disks, that derived store is
-the more sensitive artifact. Say so in public copy, exclude the cache from
-backups by default, and keep absolute paths out of diagnostics.
+the more sensitive artifact. Say so in public copy, and keep absolute paths out
+of diagnostics. Excluding the cache from backups must be scoped to what is
+regenerable — previews and derived index data — never to user-confirmed tags,
+topics, or other records the user would not be able to recreate.
 
 ### 7. Prior-art work narrowed itself once
 
@@ -298,19 +311,35 @@ program does not contain; that is real rework cost, not a measured multiple.
 - The catalog reflects the last confirmed state, not live truth; it shows the
   last successful scan time and re-verifies on open.
 - Inventory is not restricted to semantically indexable files. Every ordinary
-  file in an authorized scope gets an asset record; only some get content
-  analysis.
+  file within a fully enumerated, non-excluded scope gets an asset record; only
+  some get content analysis. Excluded and unread subtrees are reported
+  separately, so the inventory never implies coverage it did not enumerate.
 
-**What can be claimed today, before D4 exists.** Assets in an already-built
-catalog remain findable after their volume is disconnected; previews already
-generated remain viewable; after the volume is reconnected and its identity
-confirmed, the original can be opened. It is not accurate to say offline
-discovery is solved: D4 is unimplemented, the preview store is byte-capped, and
-many file types are inventory-only.
+**Current state, stated plainly.** D4 is not implemented, so neither offline
+search nor offline previews exist yet. `Engine` filters search hits through
+`FileManager.default.fileExists(atPath:)` (Engine.swift:856-859), so a
+disconnected volume's assets disappear from results today, and previews are
+in-memory only.
+
+**Target acceptance behavior after D4.** Assets in an already-built catalog
+remain findable while their volume is disconnected; previews already generated
+remain viewable; after the volume is reconnected and its identity confirmed,
+the original can be opened. Even then it will not be true that offline
+discovery is "solved": the preview store is byte-capped and many file types are
+inventory-only.
 
 ## Key Decisions & Staging for Next Steps
 
 The two blocking items come first. Both are D1 work and both gate D2 and D4.
+
+**These are not yet in the plan.** `docs/digup-atlas-plan.md` on
+`d0-fork-baseline` has not been updated to match. Its D1 still says to add
+`asset_uuid` to `files`, Lane 9 still tests a whole directory being unreadable,
+Lane 6 still uses a generic DMG remount, and D4 sets no default budget. Until
+the plan's Build, unit-test, and existing-lane acceptance text carries these,
+someone executing strictly from the plan can complete D1 without them. The
+minimal fix is to amend those boxes before D1 starts — no new phase, no extra
+lanes.
 
 **Blocking, in D1.**
 
@@ -341,8 +370,10 @@ The two blocking items come first. Both are D1 work and both gate D2 and D4.
    initial scan or a connected-volume background pass. Never enqueue preview
    generation for an index-only volume. Show incomplete preview coverage before
    a volume is disconnected. Do not trigger downloads of cloud placeholders.
-7. Keep the budget split: a 2 GiB default shared across sources, 500 MB as the
-   fixture-specific performance ceiling. Final numbers still need measurement.
+7. Propose a default preview budget of 2 GiB shared across sources, with
+   500 MB as the fixture-specific performance ceiling. The plan currently sets
+   neither; this is a proposal to adopt, not a description of what is
+   configured. Final numbers need measurement.
 
 **Before claiming the differentiator works (D3).**
 
