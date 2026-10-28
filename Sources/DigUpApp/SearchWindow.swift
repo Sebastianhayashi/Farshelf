@@ -46,7 +46,8 @@ final class SearchWindowController: NSObject, NSWindowDelegate {
         window.toolbarStyle = .unified
         window.titlebarAppearsTransparent = true
         window.titleVisibility = .hidden
-        window.title = "DigUp"
+        window.title = "Farshelf"
+        window.setAccessibilityIdentifier("digupatlas.searchWindow")
         window.minSize = NSSize(width: 820, height: 520)
         window.isReleasedWhenClosed = false
         window.delegate = self
@@ -372,7 +373,10 @@ struct SearchWindowView: View {
                         .foregroundStyle(Brand.gradient)
                         .frame(width: 22)
                     SearchField(text: $search.query, fontSize: 18, placeholder: placeholder,
-                                onMake: { search.field = $0 }, onFocus: { fieldFocused = $0 })
+                                onMake: { field in
+                                    field.setAccessibilityIdentifier("digupatlas.searchField")
+                                    search.field = field
+                                }, onFocus: { fieldFocused = $0 })
                     if !search.query.isEmpty {
                         Button {
                             search.query = ""
@@ -422,7 +426,7 @@ struct SearchWindowView: View {
             VStack(spacing: 0) {
                 BrandMark()
                 Text("Choose folders to search").font(.system(size: 20, weight: .bold)).padding(.top, 18)
-                Text("DigUp only looks where you tell it to.")
+                Text("Farshelf only looks where you tell it to.")
                     .font(.system(size: 13))
                     .foregroundStyle(.secondary)
                     .padding(.top, 6)
@@ -464,16 +468,7 @@ struct SearchWindowView: View {
             Spacer()
             if search.hasResults, !search.query.isEmpty {
                 Text(model.resultsCaveat ?? resultCount).lineLimit(1)
-            }
-            if let version = model.updateAvailable {
-                Button {
-                    app.updates.checkNow()
-                } label: {
-                    Label("DigUp \(version) is available", systemImage: "arrow.down.circle.fill")
-                        .foregroundStyle(Brand.ember)
-                }
-                .buttonStyle(.plain)
-                .help("See what's new and update")
+                    .accessibilityIdentifier("digupatlas.resultCount")
             }
         }
         .font(.system(size: 11))
@@ -741,7 +736,7 @@ private struct CodeOffOrHint: View {
                 .foregroundStyle(Brand.gradient)
             if phase == .codeOff {
                 Text("Code search is off").font(.system(size: 17, weight: .semibold))
-                Text("DigUp can find code by what it does, in the folders you pick. Code gets an index of its own and "
+                Text("Farshelf can find code by what it does, in the folders you pick. Code gets an index of its own and "
                      + "never shows up in other searches.")
                     .font(.system(size: 13))
                     .foregroundStyle(.secondary)
@@ -884,7 +879,7 @@ private struct SearchHome: View {
                 if let hotkey = model.hotkey {
                     HStack(spacing: 6) {
                         Keycaps(caps: hotkey.caps, size: 10)
-                        Text("opens DigUp from any app")
+                        Text("opens Farshelf from any app")
                     }
                 }
             }

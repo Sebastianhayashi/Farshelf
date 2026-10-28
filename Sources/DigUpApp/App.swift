@@ -7,7 +7,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     static func main() {
         signal(SIGPIPE, SIG_IGN)   // a helper that just exited must surface as a write error, not kill the app
         // DIGUP_WORKER_DIR runs another worker (the Python reference, for evals) in place of the bundled model. Only
-        // dev runs take it: anywhere else it would have DigUp, and its helpers, start whatever that folder holds.
+        // dev runs take it: anywhere else it would have Farshelf, and its helpers, start whatever that folder holds.
         if UserDefaults.standard.string(forKey: "defaultsSuite") == nil { unsetenv("DIGUP_WORKER_DIR") }
         let app = NSApplication.shared
         let delegate = AppDelegate()
@@ -33,7 +33,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         log("launch pid \(getpid()): roots \(settings.roots.map { tildePath($0.path) }) · "
             + "index \(tildePath(settings.indexDirectory.path)) · models \(tildePath(settings.modelsDirectory.path))")
         let (atLogin, why) = Launch.atLogin()   // while the open-application event is still the current one
-        let showWindow = !atLogin && !DebugHooks.drivesUI
+        // -uiDriver (scripts/ui/drive.sh) shows the window even when the launch reads as at login: a fresh VM logs in
+        // moments before the driver runs, inside the two-minute heuristic. Nothing else about the launch changes.
+        let showWindow = UserDefaults.standard.object(forKey: "uiDriver") != nil || (!atLogin && !DebugHooks.drivesUI)
         log("launch: \(atLogin ? "at login" : "opened by hand") (\(why))\(showWindow ? ", showing the window" : "")")
 
         let app = AppController(settings: settings)
@@ -50,7 +52,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     /// Another copy is running (a second copy of the app, launched from elsewhere). Dev and test runs, which keep their
-    /// own settings, index and models (`-defaultsSuite`), run alongside an installed DigUp that's in use.
+    /// own settings, index and models (`-defaultsSuite`), run alongside an installed Farshelf that's in use.
     private func isAlreadyRunning() -> Bool {
         guard UserDefaults.standard.string(forKey: "defaultsSuite") == nil,
               let id = Bundle.main.bundleIdentifier else { return false }
@@ -63,14 +65,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let mainMenu = NSMenu()
 
         let appMenu = NSMenu()
-        appMenu.addItem(withTitle: "About DigUp", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)),
+        appMenu.addItem(withTitle: "About Farshelf", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)),
                         keyEquivalent: "")
-        appMenu.addItem(ActionMenuItem("Check for Updates…") { [weak app] in app?.updates.checkNow() })
         appMenu.addItem(.separator())
         appMenu.addItem(ActionMenuItem("Settings…", key: ",") { [weak app] in app?.showSettings() })
         appMenu.addItem(.separator())
-        appMenu.addItem(withTitle: "Hide DigUp", action: #selector(NSApplication.hide(_:)), keyEquivalent: "h")
-        appMenu.addItem(withTitle: "Quit DigUp", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        appMenu.addItem(withTitle: "Hide Farshelf", action: #selector(NSApplication.hide(_:)), keyEquivalent: "h")
+        appMenu.addItem(withTitle: "Quit Farshelf", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
 
         let fileMenu = NSMenu(title: "File")
         fileMenu.addItem(ActionMenuItem("New Search", key: "n") { [weak app] in app?.showSearchWindow(query: "") })
@@ -99,8 +100,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 }
 
-/// How DigUp was launched. At login (its login item) it stays in the menu bar; opened by hand (Finder, Spotlight,
-/// Launchpad, after an update) it shows its window, so opening it never looks like nothing happened.
+/// How Farshelf was launched. At login (its login item) it stays in the menu bar; opened by hand (Finder, Spotlight
+/// or Launchpad) it shows its window, so opening it never looks like nothing happened.
 enum Launch {
     /// Whether this is the launch at login, and what says so. Call it while the app finishes launching: the
     /// open-application event is still the current one then.
@@ -137,7 +138,7 @@ enum Launch {
     }
 }
 
-/// Brings DigUp to the front. Plain `NSApp.activate()` is only a request that macOS may decline while another
+/// Brings Farshelf to the front. Plain `NSApp.activate()` is only a request that macOS may decline while another
 /// app is in use; the panel needs real activation so App Nap doesn't slow search down.
 func bringAppToFront() {
     (NSApp as any ForcedActivation).activate(ignoringOtherApps: true)

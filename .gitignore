@@ -4,6 +4,9 @@
 build.noindex/
 /Vendor/
 
+# D0 verification outputs (scripts/ui/drive.sh runs, baseline logs)
+verification/
+
 # Dev runs (scripts/dev-run.sh): their indexes, models and settings
 .dev/
 

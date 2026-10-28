@@ -38,18 +38,17 @@ so a search gets both the meaning and the exact string. On a Mac that includes t
 
 ## Private
 
-Nothing you index leaves your computer. DigUp goes online only to download the model once and to check for updates
-once a day. The update check sends nothing about your files, and you can turn it off. No account, no telemetry.
+Nothing you index leaves your computer. Farshelf goes online only to download the model once. It has no update
+check and no telemetry. No account.
 
 ## Install
 
 > [!NOTE]
-> DigUp is published only here, on this repository's Releases page, and at [digup.arahim.dev](https://digup.arahim.dev).
-> Other sites offering DigUp aren't the project's; don't download from them.
+> Farshelf is published only here, on this repository's Releases page. Other sites offering DigUp aren't the
+> project's; don't download from them.
 
-**Mac.** Download the DMG from [Releases](https://github.com/ARahim3/DigUp/releases/latest) and drag DigUp to
-Applications, or use Homebrew: `brew install --cask arahim3/tap/digup`. It needs an Apple Silicon Mac with macOS 14 or
-later.
+**Mac.** Download the DMG from [Releases](https://github.com/Sebastianhayashi/Farshelf/releases/latest) and drag
+Farshelf to Applications. It needs an Apple Silicon Mac with macOS 14 or later.
 
 **Windows.** Download `DigUp_x.y.z_x64-setup.exe` from the
 [beta release](https://github.com/ARahim3/DigUp/releases/tag/v0.7.0-beta.3) and run it. It installs for you only, with
@@ -73,8 +72,8 @@ Then, on any of them:
 2. Press the shortcut in any app and describe what you're looking for: **⇧⌘Space** on a Mac, **Ctrl+Shift+Space** on
    Windows and Linux.
 
-DigUp keeps itself up to date: the Mac app, the Windows installer and the AppImage install updates with one click.
-With the .deb, DigUp tells you when there's a new version and opens its release page.
+Farshelf does not update itself: the Mac app has no updater. To move to a new release, download its DMG from
+[Releases](https://github.com/Sebastianhayashi/Farshelf/releases) and replace the app.
 
 ## Using it
 
@@ -184,7 +183,7 @@ macros the build needs.
 git clone https://github.com/ARahim3/DigUp && cd DigUp
 scripts/build-llama.sh            # llama.cpp at a pinned tag, with a one-line patch (a few minutes)
 swift build -c release && swift test
-./build.sh                        # → build.noindex/DigUp.app
+./build.sh                        # → build.noindex/Farshelf.app
 ```
 
 On Windows and Linux you'll need Swift 6.4, Rust and Node; on Windows also Visual Studio's C++ build tools, with the
@@ -220,9 +219,8 @@ text inside screenshots is read only on a Mac, by Apple's text recognition, whic
 languages written without spaces, like Chinese, Japanese and Thai, aren't split into words.
 
 **How do I remove it?**
-On a Mac, quit it, then delete DigUp.app and `~/Library/Application Support/DigUp`, which holds the model and the
-indexes. Its settings are in `~/Library/Preferences/com.abdurrahim.DigUp.plist`. With Homebrew, `brew uninstall --cask
---zap digup` removes all of it.
+On a Mac, quit it, then delete Farshelf.app and `~/Library/Application Support/DigUpAtlas`, which holds the model
+and the indexes. Its settings are in `~/Library/Preferences/org.digupatlas.app.plist`.
 On Windows, uninstall it in Settings → Apps; tick "Delete the application data" to remove the model and the index too.
 On Linux, `sudo apt remove dig-up` (or delete the AppImage), then delete `~/.local/share/digup` (the model and the
 index), `~/.config/com.abdurrahim.DigUp`, `~/.local/share/com.abdurrahim.DigUp` and, if it opened at login,
@@ -236,8 +234,7 @@ DigUp is free and open source, and it stays that way. If it helps you and you'd 
 ## Thanks
 
 DigUp is built on [EmbeddingGemma 2](https://huggingface.co/google/embeddinggemma-2) by Google DeepMind (Apache 2.0)
-and [llama.cpp](https://github.com/ggml-org/llama.cpp) (MIT). The Mac app uses [Sparkle](https://sparkle-project.org)
-(MIT) for updates. The Windows and Linux app is built with [Tauri](https://tauri.app) (MIT or Apache 2.0) and reads
+and [llama.cpp](https://github.com/ggml-org/llama.cpp) (MIT). The Windows and Linux app is built with [Tauri](https://tauri.app) (MIT or Apache 2.0) and reads
 files with [PDFium](https://pdfium.googlesource.com/pdfium/) (BSD), [FFmpeg](https://ffmpeg.org) (LGPL),
 [stb](https://github.com/nothings/stb) (public domain) and [miniz](https://github.com/richgel999/miniz) (MIT). Their
 license notices ship with the app.
