@@ -1,4 +1,4 @@
-<p align="center"><img src="docs/logo.svg" width="96" alt="Farshelf icon"></p>
+<p align="center"><img src="docs/logo.png" width="96" alt="Farshelf icon"></p>
 
 <h1 align="center">Farshelf</h1>
 

@@ -1,34 +1,16 @@
 {
   "fill": {
-    "solid": "srgb:0.06275,0.14510,0.29020,1.00000"
+    "solid": "srgb:1.00000,1.00000,1.00000,1.00000"
   },
   "groups": [
     {
       "layers": [
         {
-          "image-name": "preview.svg",
-          "name": "preview"
+          "image-name": "farshelf.png",
+          "name": "Farshelf artwork"
         }
       ],
-      "name": "03 Preview"
-    },
-    {
-      "layers": [
-        {
-          "image-name": "frame.svg",
-          "name": "frame"
-        }
-      ],
-      "name": "02 Frame"
-    },
-    {
-      "layers": [
-        {
-          "image-name": "archive.svg",
-          "name": "archive"
-        }
-      ],
-      "name": "01 Archive"
+      "name": "Artwork"
     }
   ],
   "supported-platforms": {

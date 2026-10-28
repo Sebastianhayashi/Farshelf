@@ -29,7 +29,7 @@ swift build -c release --product DigUpApp
 swift build -c release --product digup
 BIN_DIR="$(swift build -c release --show-bin-path)"
 
-# The app icon ("One space", moss; Resources/AppIcon/README.md): macOS 26 draws the layered AppIcon.icon (compiled into
+# The Farshelf app icon (Resources/AppIcon/README.md): macOS 26 draws AppIcon.icon (compiled into
 # Assets.car), older macOS the .icns. Without the former, macOS 26 shows the icon shrunk inside a gray square.
 ICON="Resources/AppIcon.icns"
 
@@ -43,7 +43,7 @@ cp Resources/Info.plist "$APP/Contents/Info.plist"
 xcrun actool --compile "$APP/Contents/Resources" --platform macosx --target-device mac --minimum-deployment-target 14.0 \
   --app-icon AppIcon --output-partial-info-plist "$(mktemp -d)/AppIcon.plist" --enable-on-demand-resources NO \
   --development-region en "$PWD/Resources/AppIcon/AppIcon.icon" > /dev/null
-cp "$ICON" "$APP/Contents/Resources/AppIcon.icns"   # over actool's plainer fallback: ours has simplified 16 and 32 px
+cp "$ICON" "$APP/Contents/Resources/AppIcon.icns"
 cp Resources/Acknowledgements.txt "$APP/Contents/Resources/Acknowledgements.txt"
 cp Resources/AppIcon/tray.png Resources/AppIcon/tray-dim.png Resources/AppIcon/tray-paused.png "$APP/Contents/Resources/"   # the menubar's logo
 
