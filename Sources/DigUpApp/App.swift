@@ -33,7 +33,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         log("launch pid \(getpid()): roots \(settings.roots.map { tildePath($0.path) }) · "
             + "index \(tildePath(settings.indexDirectory.path)) · models \(tildePath(settings.modelsDirectory.path))")
         let (atLogin, why) = Launch.atLogin()   // while the open-application event is still the current one
-        let showWindow = !atLogin && !DebugHooks.drivesUI
+        // -uiDriver (scripts/ui/drive.sh) shows the window even when the launch reads as at login: a fresh VM logs in
+        // moments before the driver runs, inside the two-minute heuristic. Nothing else about the launch changes.
+        let showWindow = UserDefaults.standard.object(forKey: "uiDriver") != nil || (!atLogin && !DebugHooks.drivesUI)
         log("launch: \(atLogin ? "at login" : "opened by hand") (\(why))\(showWindow ? ", showing the window" : "")")
 
         let app = AppController(settings: settings)
