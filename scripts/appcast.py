@@ -53,7 +53,7 @@ def main():
     if not re.fullmatch(r'sparkle:edSignature="[^"]+" length="\d+"', signature):
         sys.exit(f"sign_update said: {signature}")
 
-    base = os.environ.get("DOWNLOAD_BASE", f"https://github.com/Sebastianhayashi/new-digup/releases/download/v{version}/")
+    base = os.environ.get("DOWNLOAD_BASE", f"https://github.com/Sebastianhayashi/Farshelf/releases/download/v{version}/")
     url = base.rstrip("/") + "/" + os.path.basename(args.dmg)
     notes = ""
     if args.notes:
