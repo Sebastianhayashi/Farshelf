@@ -9,11 +9,14 @@ cd "$(dirname "$0")/.."
 fail() { echo "VERIFY FORK FAIL: $*" >&2; exit 1; }
 
 BASE=$(git merge-base HEAD dc2651a 2>/dev/null || echo dc2651a)
+SCOPE_BASE=${SCOPE_BASE:-$(git merge-base HEAD origin/main 2>/dev/null || true)}
+[[ -n "$SCOPE_BASE" ]] || fail "cannot find origin/main; fetch it or set SCOPE_BASE"
+git rev-parse --verify --quiet "${SCOPE_BASE}^{commit}" >/dev/null || fail "invalid SCOPE_BASE: $SCOPE_BASE"
 
 contains() { grep -q -- "$1" "$2" || fail "$2 lacks $1"; }
 lacks() { ! grep -q -- "$1" "$2" || fail "$2 still has $1"; }
 
-# The whole diff against the upstream base stays inside D0's file set.
+# Check D0's changes against the target branch, which can contain other work.
 while IFS= read -r file; do
   case "$file" in
     docs/digup-atlas-plan.md|README.md|Resources/Info.plist|Resources/Acknowledgements.txt|\
@@ -23,7 +26,7 @@ Sources/DigUpApp/*|Sources/DigUpKit/Platform/Portable.swift|\
 Tests/DigUpKitTests/ForkIdentityTests.swift) ;;
     *) fail "unexpected change outside D0 scope: $file" ;;
   esac
-done < <(git diff --name-only "$BASE" HEAD)
+done < <(git diff --name-only "$SCOPE_BASE" HEAD)
 
 # Notices the fork must not have touched. Acknowledgements.txt is deliberately
 # edited by D0 to drop the Sparkle notice, so its required contents are checked
