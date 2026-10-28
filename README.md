@@ -1,23 +1,16 @@
-<p align="center"><img src="docs/logo.png" width="96" alt=""></p>
+<p align="center"><img src="docs/logo.png" width="96" alt="Farshelf icon"></p>
 
-<h1 align="center">DigUp</h1>
+<h1 align="center">Farshelf</h1>
 
-<p align="center"><b>Describe it. Dig it up.</b><br>
-Search the files on your computer by what's in them, with Google DeepMind's
-<a href="https://huggingface.co/google/embeddinggemma-2">EmbeddingGemma 2</a>.</p>
+<p align="center"><b>Find your media, even when the drive is away.</b></p>
 
-<p align="center"><a href="https://github.com/ARahim3/DigUp/releases/latest"><b>Download for Mac</b></a> ·
-<a href="https://github.com/ARahim3/DigUp/releases/tag/v0.7.0-beta.3"><b>Windows (beta)</b></a> ·
-<a href="https://github.com/ARahim3/DigUp/releases/tag/v0.7.0-beta.3"><b>Linux (beta)</b></a><br>
-<sub>Free and open source. Everything runs on your computer.</sub></p>
+Farshelf is a read-only macOS media catalog project based on
+[DigUp](https://github.com/ARahim3/DigUp). Offline catalogs, persistent previews,
+and disconnected-drive retrieval are research and engineering goals, not features
+of the current D0 baseline. The experimental scope and stop conditions live in
+[the retrieval pilot](docs/experiments/offline-media-retrieval.md).
 
-<p align="center">
-<a href="https://github.com/ARahim3/DigUp/stargazers"><img src="https://img.shields.io/github/stars/ARahim3/DigUp?style=flat-square" alt="GitHub stars"></a>
-<a href="https://github.com/ARahim3/DigUp/releases"><img src="https://img.shields.io/github/downloads/ARahim3/DigUp/total?style=flat-square" alt="Downloads"></a>
-<a href="https://github.com/ARahim3/DigUp/releases/latest"><img src="https://img.shields.io/github/v/release/ARahim3/DigUp?style=flat-square" alt="Latest release"></a>
-<a href="LICENSE"><img src="https://img.shields.io/github/license/ARahim3/DigUp?style=flat-square" alt="MIT license"></a><br>
-<a href="https://trendshift.io/repositories/295333?utm_source=trendshift-badge&amp;utm_medium=badge&amp;utm_campaign=badge-trendshift-295333" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/trendshift/repositories/295333/daily?language=Swift" alt="ARahim3/DigUp on Trendshift: #1 repository of the day for Swift" width="250" height="55"></a>
-</p>
+## Current DigUp baseline
 
 <p align="center"><img src="docs/demo.gif" width="800" alt="DigUp's search panel on a Mac, on Windows and on Linux: a zebra in a video, a podcast minute, a clause in a lease, a dog on the beach in English, Bengali and Arabic, and code that opens in Zed."></p>
 
