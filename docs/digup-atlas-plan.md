@@ -39,8 +39,8 @@ Tests alone are not sufficient verification. A PR is verified only when its unit
   - [ ] D3 after D2.
   - [ ] D4 after D3.
 - [ ] Hold the file boundaries. D0 touches only the project plan, user documentation, app identity and data isolation, update-channel behavior, development and release scripts, and UI verification files. D1 touches only inventory, identity, sync, and their UI files. D2 touches only stable tags and their UI files. D3 touches only semantic suggestions, evaluations, and their UI files. D4 touches only offline availability, preview storage, and their UI files.
-- [ ] Hold the host rule. A view is not deliverable until a user can reach it. Each stage below may edit exactly one navigation host, named in its Files list, in addition to its own new views. No stage adds a new top-level window: the atlas surfaces live in the existing search window and are reached from it. D1 owns the first host edit and establishes the tab or section that D2, D3, and D4 extend. A stage that cannot reach its surface without editing a host it was not granted stops and reports, instead of widening its own scope.
-- [ ] Keep the file lists disjoint. If two stages need the same file, the earlier stage owns it and the later stage gets the host edit it needs by name.
+- [ ] Hold the host rule. A view is not deliverable until a user can reach it. Each stage below may edit exactly two shared files, named in its Files list: `SearchWindow.swift`, which holds the surface structure, and `AppModel.swift`, which holds the selected surface and its counts. D1 creates that structure; D2, D3 and D4 add hunks to it and never restructure it. No stage adds a new top-level window: the atlas surfaces live in the existing search window and are reached from it. A stage that cannot reach its surface without editing a file it was not granted stops and reports, instead of widening its own scope.
+- [ ] Keep the file lists disjoint except for the two shared files above. `IndexStore.swift` is the one database writer and is edited by every stage that adds a table; state that exception up front rather than letting four stages each assume ownership. If two stages would change the same behaviour in a non-shared file, the earlier stage owns it and the later stage gets the edit it needs by name.
 - [ ] Hold the review gate. D0, D1, D2, D3, and D4 change an interaction. They wait for the operator's review in chat with screenshots and a video before merge.
 
 ### PR mechanics, for every PR
@@ -63,7 +63,7 @@ Tests alone are not sufficient verification. A PR is verified only when its unit
 Each live lane runs on its own isolated macOS VM at the PR head. Cursor cloud VMs and control skills are unavailable in Kimi Code. Use a macOS VM with Xcode 26 or later, ffmpeg, accessibility permission, and the pinned model files. Allow network access for the initial Homebrew and model downloads, then disable it for offline lanes. Drive the real app through `scripts/ui/drive.sh`, which uses AppleScript, Accessibility, and `screencapture`.
 
 - [ ] `git fetch origin <head-branch> && git checkout <head SHA>`.
-- [ ] Reuse the build for the head SHA if it exists at `/tmp/swarm-<pr-id>/build`. Build only when it does not: `scripts/build-llama.sh && swift build -c release && swift test && ./build.sh`, then copy `build.noindex/DigUpAtlas.app` and `.build` into that directory. Rebuilding the same head on every lane repeats the llama.cpp compile ten times per stage for no added verification. Open `build.noindex/DigUpAtlas.app` and wait for the main window's accessibility identifier.
+- [ ] Reuse the build for the head SHA. The shared store is `/tmp/swarm-shared/build/<head-sha>`, on the host, mounted into every lane; a per-PR or per-lane path cannot work because each lane runs in its own VM and `/tmp` there is private. Build only when that directory is absent: `scripts/build-llama.sh && swift build -c release && swift test && ./build.sh`, then copy `build.noindex/DigUpAtlas.app` and `.build` into it. A different head SHA gets a different directory, so a review-fix head never reuses the previous head's artifacts. Rebuilding the same head on every lane repeats the llama.cpp compile ten times per stage for no added verification. Open `build.noindex/DigUpAtlas.app` and wait for the main window's accessibility identifier.
 - [ ] Deliver user input only through `scripts/ui/drive.sh`. Use `sqlite3 -readonly`, `log show`, `stat`, `hdiutil`, and process inspection as read-only diagnostics. Create test volumes and fixture files only inside the lane's scratch directory.
 - [ ] Save every screenshot to `/tmp/swarm-<pr-id>/worker-<n>/<slug>.png` and return the paths with the report.
 
@@ -149,7 +149,7 @@ Each live lane runs on its own isolated macOS VM at the PR head. Cursor cloud VM
 - [ ] Edit `Sources/DigUpKit/Indexer.swift`.
 - [ ] Edit `Sources/DigUpApp/FolderWatcher.swift`.
 - [ ] Edit `Sources/DigUpApp/Engine.swift`.
-- [ ] Edit `Sources/DigUpApp/SearchWindow.swift` as D1's host: add the atlas surface and the way to move between it and search. D2, D3, and D4 extend this host rather than replacing it.
+- [ ] Edit `Sources/DigUpApp/AppModel.swift` and `Sources/DigUpApp/SearchWindow.swift` as D1's host: add the atlas surface and the way to move between it and search. D2, D3, and D4 extend this host rather than replacing it. `AppModel` holds the selected surface and its counts; it is the one state file every stage after D1 may edit, and only additively.
 - [ ] Create `Sources/DigUpKit/AssetInventory.swift`.
 - [ ] Create `Sources/DigUpApp/InventoryView.swift`.
 - [ ] Create `Tests/DigUpKitTests/AssetInventoryTests.swift`.
@@ -159,7 +159,9 @@ Each live lane runs on its own isolated macOS VM at the PR head. Cursor cloud VM
 
 - [ ] Define `AssetID`, `VolumeID`, `AssetLocation`, and `Availability` with states `available`, `unavailable`, and `deleted`. Never use a path as an asset ID.
 - [ ] Give asset identity its own persistent table. `files` stays a rebuildable index: its rows are keyed by a unique path, `segments` cascade from it, and `IndexStore.delete` removes a row. An `asset_uuid` column on `files` would therefore be destroyed by any row deletion, taking user decisions with it. Keep a tombstone row per asset that is gone, so derived index rows can be deleted without losing identity.
-- [ ] Add volume metadata keyed by a volume UUID where macOS provides one. Preserve the asset identity through `IndexStore.move` and content requeue. Record identity evidence at first sight from metadata only: the device and inode pair, size, modification time, and the volume identifier. Do not hash file contents during a crawl; `Crawler` reads metadata only and D1's perf rule keeps a no-op sync within ten percent of trunk. When two records are ambiguous, use the retained metadata to decide, and when metadata cannot distinguish them, keep them as separate assets rather than merging them. Never merge two assets on similarity alone.
+- [ ] Record identity evidence at first sight, cheapest first, and name the fallback for the drives this product targets. Level one is metadata only: device and inode pair, size, modification time, and the volume identifier. This is the normal path and must not read file contents; `Crawler` reads metadata only, and D1's perf rule keeps a no-op sync within ten percent of trunk.
+- [ ] For a volume that provides no stable identifier, or after a remount where the metadata pair fails to match, fall back to content. Read a bounded digest for candidate assets only, never the whole volume: a prefix and suffix of at most 64 KiB each plus the size. Record it at first sight for assets on such a volume so the evidence exists before it is needed; by the time a collision is detected the old content may be unreachable. State the added cost for the fixture in the perf lane.
+- [ ] When metadata and content both fail to distinguish two records, keep them as separate assets. Never merge two assets on similarity, path equality, or filename equality alone.
 - [ ] Track scan completeness per reconciled subtree. A subtree is trusted only when it was enumerated completely. An unreadable, interrupted, or disconnected subtree is unverified and can never confirm a deletion. Today `Indexer.sync` protects only a root that vanished entirely; `Crawler` swallows a directory-level read failure at `errorHandler: { _, _ in true }` and continues, so files under a live-but-unreadable subdirectory would be deleted as absent.
 - [ ] Build `AssetInventory` as a read-only API over file, location, scan-state, and volume data. Do not change `segments` or trigger embedding for inventory reads.
 - [ ] Record every ordinary file in a completely enumerated, non-excluded scope as an asset, whether or not its type is eligible for semantic embedding. Today `Crawler` records unsupported types only as an aggregate skip count (`leftOut("other type")`), with no per-file record, so wrapping `IndexStore.files` cannot satisfy this.
@@ -218,7 +220,7 @@ Each live lane runs on its own isolated macOS VM at the PR head. Cursor cloud VM
 
 - [ ] Edit `Sources/DigUpKit/IndexStore.swift`.
 - [ ] Edit `Sources/DigUpKit/Indexer.swift`.
-- [ ] Edit `Sources/DigUpApp/SearchWindow.swift` to add the tags surface to the host D1 established.
+- [ ] Edit `Sources/DigUpApp/AppModel.swift` and `Sources/DigUpApp/SearchWindow.swift` to add the tags surface to the host D1 established. Additive hunks only.
 - [ ] Create `Sources/DigUpKit/Tags.swift`.
 - [ ] Create `Sources/DigUpApp/TagsView.swift`.
 - [ ] Create `Tests/DigUpKitTests/TagsTests.swift`.
@@ -283,7 +285,7 @@ Each live lane runs on its own isolated macOS VM at the PR head. Cursor cloud VM
 - [ ] Edit `Sources/DigUpKit/IndexStore.swift`.
 - [ ] Edit `Sources/DigUpKit/Searcher.swift`.
 - [ ] Edit `Sources/digup/main.swift`.
-- [ ] Edit `Sources/DigUpApp/SearchWindow.swift` to add the suggestions surface to the host D1 established.
+- [ ] Edit `Sources/DigUpApp/AppModel.swift` and `Sources/DigUpApp/SearchWindow.swift` to add the suggestions surface to the host D1 established. Additive hunks only.
 - [ ] Create `Sources/DigUpKit/SemanticSuggestions.swift`.
 - [ ] Create `Sources/DigUpApp/SuggestionsView.swift`.
 - [ ] Create `Tests/DigUpKitTests/SemanticSuggestionsTests.swift`.
@@ -296,8 +298,8 @@ Each live lane runs on its own isolated macOS VM at the PR head. Cursor cloud VM
 - [ ] Generate candidate topic clusters for unlabeled assets. Keep clusters disposable until the user confirms a topic.
 - [ ] Write acceptance or rejection through the user-decision API. Suppress rejected suggestions across scans and model updates.
 - [ ] Record suggestion source and model version so a user can inspect why a label appeared.
-- [ ] Build a labeled multimodal evaluation set and a repeatable `digup eval asset-topics` command. Do not train on unconfirmed suggestions.
-- [ ] Keep automatic file moves, automatic deletion, and silent tag assignment out of the product.
+- [ ] Build a labeled multimodal evaluation set and extend the existing eval surface to score suggestions. `Sources/digup/main.swift` already exposes `digup eval <queries.json>` with an `EvalFile` schema of `base`, `queries`, and `expect`, and prints R@1/R@5/R@10/MRR with per-tag rollups. Add the asset-topics metric to that command and that file format; do not add a second harness or a bare `asset-topics` subcommand, which would parse as an eval file name.
+- [ ] Keep automatic file moves, automatic deletion, silent tag assignment, and training on unconfirmed suggestions out of the product.
 
 **You see.**
 
@@ -350,21 +352,20 @@ Each live lane runs on its own isolated macOS VM at the PR head. Cursor cloud VM
 
 - [ ] Edit `Sources/DigUpKit/IndexStore.swift`.
 - [ ] Edit `Sources/DigUpApp/Engine.swift`.
-- [ ] Edit `Sources/DigUpApp/AddFolders.swift`.
-- [ ] Edit `Sources/DigUpApp/SearchWindow.swift` to add the offline library surface to the host D1 established.
+- [ ] Edit `Sources/DigUpApp/AppModel.swift` and `Sources/DigUpApp/SearchWindow.swift` to add the offline library surface to the host D1 established. Only additive hunks in SearchWindow.swift: D1 owns its structure.
 - [ ] Create `Sources/DigUpKit/OfflinePreviewStore.swift`.
 - [ ] Create `Sources/DigUpApp/OfflineLibraryView.swift`.
 - [ ] Create `Tests/DigUpKitTests/OfflinePreviewStoreTests.swift`.
 
 **Build.**
 
-- [ ] Define `PreviewKind` for image thumbnails, video contact sheets, and representative document pages. Key each preview by asset ID and content version.
+- [ ] Persist the output of the existing renderer rather than building a second one. `Sources/DigUpKit/PreviewImages.swift` already renders a PDF page, a video frame at a second, or an image to a JPEG; `Sources/DigUpApp/Previews.swift` and `Thumbnails.swift` already cache those. The new work is a persistent directory under the fork's application-support path, keyed by asset ID and content version, with a byte ceiling and eviction. Do not add a fourth renderer or a parallel kind enum.
 - [ ] Store preview files and metadata on the Mac under the fork's application-support directory. Never copy an original asset into the preview cache.
 - [ ] Generate and persist previews while the source is locally readable, from the initial scan or a connected-volume background pass. `QLThumbnailGenerator` needs a readable source URL, so a preview cannot be produced after the volume is gone and a later system-cache hit must not be relied on.
 - [ ] Never enqueue preview generation for an `index only` volume.
 - [ ] Show incomplete preview coverage before a volume is disconnected, and leave a preview that was never generated as visibly missing. Do not present it as cached.
-- [ ] Add per-volume preview modes for index only, standard previews, and enhanced previews. Enforce a byte budget and report files without previews.
-- [ ] Start with a default budget of 2 GiB shared across all sources, with 500 MB kept as the fixture-specific performance ceiling in the perf rule below. Take 2 GiB as a starting value to be revised from measured cache coverage, not as a proven fit for the target user.
+- [ ] Add per-volume preview behavior: one standard mode plus a byte ceiling. An `index only` volume is the one exception and is opt-in; it generates no previews. Further modes wait for measured cache coverage to show they are needed.
+- [ ] Start with a default budget of 2 GiB shared across all sources. Take it as a starting value to be revised from measured cache coverage, not as a proven fit for the target user.
 - [ ] Keep unavailable assets in search results with their volume name, last known path, tags, and available previews. Require reconnection before opening the original.
 - [ ] Invalidate stale previews after content changes and preserve confirmed tags when a preview is evicted.
 - [ ] Add a per-volume action that deletes only derived indexes and previews after explicit confirmation. Keep source files untouched.
