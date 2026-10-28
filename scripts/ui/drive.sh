@@ -52,6 +52,10 @@ fi
 
 EXE="$(cd "$APP" && pwd -P)/Contents/MacOS/Farshelf"
 pkill -f "$EXE" 2>/dev/null || true
+cleanup() { pkill -f "$EXE" 2>/dev/null || true; }
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
 sleep 1
 
 echo "launching $APP (roots $FIXTURE, query \"$QUERY\")"
@@ -72,6 +76,7 @@ echo "window digupatlas.searchWindow at $((T_WINDOW - T0)) s"
 
 set_field() {
   osascript - "$QUERY" <<'APPLESCRIPT' 2>&1
+using terms from application "System Events"
 on findById(elements, target)
   repeat with e in elements
     try
@@ -87,6 +92,7 @@ on findById(elements, target)
   end repeat
   return missing value
 end findById
+end using terms from
 
 on run argv
   tell application "System Events"
@@ -106,6 +112,7 @@ deadline=$((SECONDS + TIMEOUT))
 COUNT=""
 while true; do
   COUNT=$(osascript <<'APPLESCRIPT' 2>/dev/null || true
+using terms from application "System Events"
 on findById(elements, target)
   repeat with e in elements
     try
@@ -121,6 +128,7 @@ on findById(elements, target)
   end repeat
   return missing value
 end findById
+end using terms from
 
 on run
   tell application "System Events"
@@ -143,9 +151,28 @@ T_RESULTS=$(date +%s)
 echo "results at $((T_RESULTS - T0)) s: $COUNT"
 
 sleep 1
-read -r X Y W H <<<"$(osascript -e "$AX"' to get {item 1 of (position of window 1), item 2 of (position of window 1), item 1 of (size of window 1), item 2 of (size of window 1)}' | tr ',' ' ')"
+APP_PID=$(osascript -e "$AX to get unix id")
+WINDOW_ID=$(swift - "$APP_PID" <<'SWIFT'
+import CoreGraphics
+import Foundation
+
+let pid = Int(CommandLine.arguments[1])!
+let windows = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID)
+    as? [[String: Any]] ?? []
+let candidates = windows.compactMap { window -> (Int, Double)? in
+    guard (window[kCGWindowOwnerPID as String] as? Int) == pid,
+          (window[kCGWindowLayer as String] as? Int) == 0,
+          let number = window[kCGWindowNumber as String] as? Int,
+          let bounds = window[kCGWindowBounds as String] as? [String: Double],
+          let width = bounds["Width"], let height = bounds["Height"], width >= 300, height >= 200 else { return nil }
+    return (number, width * height)
+}
+guard let target = candidates.max(by: { $0.1 < $1.1 }) else { exit(1) }
+print(target.0)
+SWIFT
+) || fail "could not identify the search window for capture"
 SHOT="$OUT/fork-driver.png"
-screencapture -R "$X,$Y,$W,$H" -x "$SHOT"
+screencapture -l "$WINDOW_ID" -x "$SHOT"
 BYTES=$(stat -f %z "$SHOT")
 [[ "$BYTES" -gt 20000 ]] || fail "screenshot too small (${BYTES} B): the capture was probably refused"
 sips -g pixelWidth -g pixelHeight "$SHOT" | tail -2
@@ -153,7 +180,7 @@ sips -g pixelWidth -g pixelHeight "$SHOT" | tail -2
 AFTER=$(find "$FIXTURE" -type f -exec shasum -a 256 {} + | sort)
 [[ "$BEFORE" == "$AFTER" ]] || fail "the fixture changed during the run"
 
-osascript -e 'tell application id "org.digupatlas.app" to quit' || true
+cleanup
 for _ in $(seq 1 20); do pgrep -f "$EXE" >/dev/null || break; sleep 0.5; done
 
 echo "DRIVE PASS: $SHOT ($BYTES bytes, window at $((T_WINDOW - T0)) s, results at $((T_RESULTS - T0)) s)"
