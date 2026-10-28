@@ -16,18 +16,27 @@ lacks() { ! grep -q -- "$1" "$2" || fail "$2 still has $1"; }
 # The whole diff against the upstream base stays inside D0's file set.
 while IFS= read -r file; do
   case "$file" in
-    docs/digup-atlas-plan.md|Resources/Info.plist|build.sh|Package.swift|.gitignore|Package.resolved|\
-Sources/DigUpApp/*|scripts/ui/drive.sh|scripts/verify-fork.sh|Tests/DigUpKitTests/ForkIdentityTests.swift) ;;
+    docs/digup-atlas-plan.md|README.md|Resources/Info.plist|Resources/Acknowledgements.txt|\
+build.sh|Package.swift|.gitignore|Package.resolved|\
+scripts/appcast.py|scripts/dev-run.sh|scripts/release.sh|scripts/ui/drive.sh|scripts/verify-fork.sh|\
+Sources/DigUpApp/*|Sources/DigUpKit/Platform/Portable.swift|\
+Tests/DigUpKitTests/ForkIdentityTests.swift) ;;
     *) fail "unexpected change outside D0 scope: $file" ;;
   esac
 done < <(git diff --name-only "$BASE" HEAD)
 
-# Notices and fixtures the fork must not have touched.
-git diff --quiet "$BASE" HEAD -- LICENSE Resources/Acknowledgements.txt || fail "LICENSE or Acknowledgements changed"
+# Notices the fork must not have touched. Acknowledgements.txt is deliberately
+# edited by D0 to drop the Sparkle notice, so its required contents are checked
+# below instead of asserting the file is unchanged.
+git diff --quiet "$BASE" HEAD -- LICENSE || fail "LICENSE changed"
 git diff --quiet "$BASE" HEAD -- Tests/DigUpKitTests/Pictures Tests/DigUpKitTests/Videos \
   Tests/LlamaRuntimeTests/Reference || fail "a checked-in fixture changed"
-git diff --quiet "$BASE" HEAD -- Sources/DigUpKit Sources/digup Sources/LlamaRuntime Sources/CLlama \
-  Sources/CLlamaShared Sources/CLlamaWindows Sources/CPDFium || fail "cross-platform source changed"
+
+# Cross-platform sources stay intact. The one exception is the fork-identity
+# path table, which D0 must edit so the fork never writes to upstream locations.
+git diff --quiet "$BASE" HEAD -- Sources/DigUpKit Sources/digup Sources/LlamaRuntime \
+  Sources/CLlama Sources/CLlamaShared Sources/CLlamaWindows Sources/CPDFium \
+  ':(exclude)Sources/DigUpKit/Platform/Portable.swift' || fail "cross-platform source changed"
 
 PLIST=Resources/Info.plist
 [[ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$PLIST")" == "org.digupatlas.app" ]] \
