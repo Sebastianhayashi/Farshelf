@@ -1,28 +1,37 @@
 {
-  "fill" : {
-    "solid" : "srgb:0.07451,0.12549,0.10196,1.00000"
+  "fill": {
+    "solid": "srgb:0.06275,0.14510,0.29020,1.00000"
   },
-  "groups" : [
+  "groups": [
     {
-      "layers" : [
+      "layers": [
         {
-          "image-name" : "d-mark.svg",
-          "name" : "d-mark"
+          "image-name": "preview.svg",
+          "name": "preview"
         }
       ],
-      "name" : "D"
+      "name": "03 Preview"
     },
     {
-      "layers" : [
+      "layers": [
         {
-          "image-name" : "tiles.svg",
-          "name" : "tiles"
+          "image-name": "frame.svg",
+          "name": "frame"
         }
       ],
-      "name" : "Tiles"
+      "name": "02 Frame"
+    },
+    {
+      "layers": [
+        {
+          "image-name": "archive.svg",
+          "name": "archive"
+        }
+      ],
+      "name": "01 Archive"
     }
   ],
-  "supported-platforms" : {
-    "squares" : "shared"
+  "supported-platforms": {
+    "squares": "shared"
   }
 }
