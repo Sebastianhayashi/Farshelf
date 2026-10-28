@@ -21,9 +21,9 @@ private func sourceFiles() -> [URL] {
     @Test func identityIsIndependent() throws {
         let info = try plist()
         #expect(info["CFBundleIdentifier"] as? String == "org.digupatlas.app")
-        #expect(info["CFBundleDisplayName"] as? String == "DigUp Atlas")
-        #expect(info["CFBundleName"] as? String == "DigUp Atlas")
-        #expect(info["CFBundleExecutable"] as? String == "DigUpAtlas")
+        #expect(info["CFBundleDisplayName"] as? String == "Farshelf")
+        #expect(info["CFBundleName"] as? String == "Farshelf")
+        #expect(info["CFBundleExecutable"] as? String == "Farshelf")
         #expect(info["SUFeedURL"] == nil)
         #expect(info["SUPublicEDKey"] == nil)
         #expect(info["SUEnableAutomaticChecks"] == nil)

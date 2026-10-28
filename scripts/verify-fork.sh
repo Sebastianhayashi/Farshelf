@@ -41,8 +41,8 @@ git diff --quiet "$BASE" HEAD -- Sources/DigUpKit Sources/digup Sources/LlamaRun
 PLIST=Resources/Info.plist
 [[ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$PLIST")" == "org.digupatlas.app" ]] \
   || fail "bundle identifier is not org.digupatlas.app"
-[[ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleDisplayName' "$PLIST")" == "DigUp Atlas" ]] \
-  || fail "display name is not DigUp Atlas"
+[[ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleDisplayName' "$PLIST")" == "Farshelf" ]] \
+  || fail "display name is not Farshelf"
 /usr/libexec/PlistBuddy -c 'Print :SUFeedURL' "$PLIST" >/dev/null 2>&1 && fail "SUFeedURL still set"
 /usr/libexec/PlistBuddy -c 'Print :SUPublicEDKey' "$PLIST" >/dev/null 2>&1 && fail "SUPublicEDKey still set"
 ! /usr/libexec/PlistBuddy -c 'Print :SUEnableAutomaticChecks' "$PLIST" >/dev/null 2>&1 || fail "SUEnableAutomaticChecks still set"
@@ -56,7 +56,7 @@ lacks "sparkle-project" Package.swift
 lacks "Sparkle" build.sh
 
 # The packaged app, when built, carries the notices and the same identity, with no updater framework.
-APP=build.noindex/DigUpAtlas.app
+APP=build.noindex/Farshelf.app
 if [[ -d "$APP" ]]; then
   [[ -f "$APP/Contents/Resources/LICENSE" ]] || fail "the packaged app lacks LICENSE"
   [[ -f "$APP/Contents/Resources/Acknowledgements.txt" ]] || fail "the packaged app lacks Acknowledgements.txt"
@@ -73,7 +73,7 @@ UPSTREAM=com.abdurrahim.DigUp
 BEFORE=$(defaults export "$UPSTREAM" - 2>/dev/null || true)
 if [[ -d "$APP" ]]; then
   SCRATCH=$(mktemp -d)
-  EXE="$(cd "$APP" && pwd -P)/Contents/MacOS/DigUpAtlas"
+  EXE="$(cd "$APP" && pwd -P)/Contents/MacOS/Farshelf"
   pkill -f "$EXE" 2>/dev/null || true
   open -n "$APP" --args -roots "$SCRATCH/fixture" -indexDir "$SCRATCH/index" -modelsDir "$SCRATCH/models" \
     -defaultsSuite org.digupatlas.app.verify -debugQuitAfter 5

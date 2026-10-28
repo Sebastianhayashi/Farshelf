@@ -1,9 +1,9 @@
 #!/bin/bash
-# Drives the packaged DigUp Atlas app like a user: launches it against a fixture folder, types a query into the
+# Drives the packaged Farshelf app like a user: launches it against a fixture folder, types a query into the
 # real search field through Accessibility, waits for results, and captures the window with screencapture.
 #   scripts/ui/drive.sh
 # Env overrides:
-#   APP     the bundle (default build.noindex/DigUpAtlas.app)
+#   APP     the bundle (default build.noindex/Farshelf.app)
 #   FIXTURE the folder the app searches (default verification/D0/fixture, created with known content if absent)
 #   QUERY   what to search for (default football)
 #   OUT     where the screenshot and logs go (default verification/D0)
@@ -14,7 +14,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 
-APP="${APP:-build.noindex/DigUpAtlas.app}"
+APP="${APP:-build.noindex/Farshelf.app}"
 FIXTURE="${FIXTURE:-verification/D0/fixture}"
 QUERY="${QUERY:-football}"
 OUT="${OUT:-verification/D0}"
@@ -50,16 +50,16 @@ if [[ ! -f "$MODELS/embeddinggemma-2-Q8_0.gguf" && -f "$SNAPSHOT/embeddinggemma-
   done
 fi
 
-EXE="$(cd "$APP" && pwd -P)/Contents/MacOS/DigUpAtlas"
+EXE="$(cd "$APP" && pwd -P)/Contents/MacOS/Farshelf"
 pkill -f "$EXE" 2>/dev/null || true
 sleep 1
 
 echo "launching $APP (roots $FIXTURE, query \"$QUERY\")"
 T0=$(date +%s)
 open -n "$APP" --args -roots "$(cd "$FIXTURE" && pwd)" -indexDir "$(pwd)/$OUT/index" \
-  -modelsDir "$(pwd)/$MODELS" -defaultsSuite "$SUITE"
+  -modelsDir "$(pwd)/$MODELS" -defaultsSuite "$SUITE" -uiDriver YES
 
-AX='tell application "System Events" to tell process "DigUpAtlas"'
+AX='tell application "System Events" to tell process "Farshelf"'
 deadline=$((SECONDS + 120))
 while true; do
   W=$(osascript -e "$AX"' to get {count of windows, value of attribute "AXIdentifier" of window 1}' 2>/dev/null) || true
@@ -90,7 +90,7 @@ end findById
 
 on run argv
   tell application "System Events"
-    tell process "DigUpAtlas"
+    tell process "Farshelf"
       set field to my findById(UI elements of window 1, "digupatlas.searchField")
       if field is missing value then error "digupatlas.searchField not found"
       set focused of field to true
@@ -124,7 +124,7 @@ end findById
 
 on run
   tell application "System Events"
-    tell process "DigUpAtlas"
+    tell process "Farshelf"
       set t to my findById(UI elements of window 1, "digupatlas.resultCount")
       if t is missing value then return ""
       return value of t as text

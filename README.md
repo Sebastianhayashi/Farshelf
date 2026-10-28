@@ -45,17 +45,17 @@ so a search gets both the meaning and the exact string. On a Mac that includes t
 
 ## Private
 
-Nothing you index leaves your computer. DigUp Atlas goes online only to download the model once. It has no update
+Nothing you index leaves your computer. Farshelf goes online only to download the model once. It has no update
 check and no telemetry. No account.
 
 ## Install
 
 > [!NOTE]
-> DigUp Atlas is published only here, on this repository's Releases page. Other sites offering DigUp aren't the
+> Farshelf is published only here, on this repository's Releases page. Other sites offering DigUp aren't the
 > project's; don't download from them.
 
-**Mac.** Download the DMG from [Releases](https://github.com/Sebastianhayashi/new-digup/releases/latest) and drag
-DigUp Atlas to Applications. It needs an Apple Silicon Mac with macOS 14 or later.
+**Mac.** Download the DMG from [Releases](https://github.com/Sebastianhayashi/Farshelf/releases/latest) and drag
+Farshelf to Applications. It needs an Apple Silicon Mac with macOS 14 or later.
 
 **Windows.** Download `DigUp_x.y.z_x64-setup.exe` from the
 [beta release](https://github.com/ARahim3/DigUp/releases/tag/v0.7.0-beta.3) and run it. It installs for you only, with
@@ -79,8 +79,8 @@ Then, on any of them:
 2. Press the shortcut in any app and describe what you're looking for: **⇧⌘Space** on a Mac, **Ctrl+Shift+Space** on
    Windows and Linux.
 
-DigUp Atlas does not update itself: the Mac app has no updater. To move to a new release, download its DMG from
-[Releases](https://github.com/Sebastianhayashi/new-digup/releases) and replace the app.
+Farshelf does not update itself: the Mac app has no updater. To move to a new release, download its DMG from
+[Releases](https://github.com/Sebastianhayashi/Farshelf/releases) and replace the app.
 
 ## Using it
 
@@ -190,7 +190,7 @@ macros the build needs.
 git clone https://github.com/ARahim3/DigUp && cd DigUp
 scripts/build-llama.sh            # llama.cpp at a pinned tag, with a one-line patch (a few minutes)
 swift build -c release && swift test
-./build.sh                        # → build.noindex/DigUpAtlas.app
+./build.sh                        # → build.noindex/Farshelf.app
 ```
 
 On Windows and Linux you'll need Swift 6.4, Rust and Node; on Windows also Visual Studio's C++ build tools, with the
@@ -226,7 +226,7 @@ text inside screenshots is read only on a Mac, by Apple's text recognition, whic
 languages written without spaces, like Chinese, Japanese and Thai, aren't split into words.
 
 **How do I remove it?**
-On a Mac, quit it, then delete DigUpAtlas.app and `~/Library/Application Support/DigUpAtlas`, which holds the model
+On a Mac, quit it, then delete Farshelf.app and `~/Library/Application Support/DigUpAtlas`, which holds the model
 and the indexes. Its settings are in `~/Library/Preferences/org.digupatlas.app.plist`.
 On Windows, uninstall it in Settings → Apps; tick "Delete the application data" to remove the model and the index too.
 On Linux, `sudo apt remove dig-up` (or delete the AppImage), then delete `~/.local/share/digup` (the model and the

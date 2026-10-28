@@ -1,7 +1,7 @@
 import AppKit
 import SwiftUI
 
-/// The menubar icon: DigUp Atlas's logo (`Resources/AppIcon/tray.svg` and its `tray*.png`, as the Windows and Linux app's tray
+/// The menubar icon: Farshelf's logo (`Resources/AppIcon/tray.svg` and its `tray*.png`, as the Windows and Linux app's tray
 /// shows it). While the model downloads or files index, the tiles are dimmed and get their color back in a sweep from
 /// the top, clockwise, as far as it has come; while indexing is paused, two bars take the D's place.
 enum StatusIcon {
@@ -32,7 +32,7 @@ enum StatusIcon {
             }
             return true
         }
-        image.accessibilityDescription = "DigUp Atlas"
+        image.accessibilityDescription = "Farshelf"
         return image
     }
 }
@@ -80,7 +80,7 @@ final class StatusMenuController: NSObject, NSMenuDelegate {
             shownProgress = progress
             shownPaused = paused
         }
-        button.toolTip = "DigUp Atlas — \(model.statusLine)"
+        button.toolTip = "Farshelf — \(model.statusLine)"
     }
 
     func menuNeedsUpdate(_ menu: NSMenu) {
@@ -101,7 +101,7 @@ final class StatusMenuController: NSObject, NSMenuDelegate {
             search.keyEquivalentModifierMask = modifiers
         }
         menu.addItem(search)
-        menu.addItem(ActionMenuItem("Open DigUp Atlas") { [weak self] in self?.onOpenWindow() })
+        menu.addItem(ActionMenuItem("Open Farshelf") { [weak self] in self?.onOpenWindow() })
         if model.hasFolders {
             menu.addItem(.separator())
             let paused = model.status.paused
@@ -117,7 +117,7 @@ final class StatusMenuController: NSObject, NSMenuDelegate {
         }
         menu.addItem(.separator())
         menu.addItem(ActionMenuItem("Settings…", key: ",") { [weak self] in self?.onSettings() })
-        menu.addItem(ActionMenuItem("Quit DigUp Atlas", key: "q") { NSApp.terminate(nil) })
+        menu.addItem(ActionMenuItem("Quit Farshelf", key: "q") { NSApp.terminate(nil) })
     }
 
     /// The menu as text, for the -debugMenu launch argument (menus can't be clicked from a script).

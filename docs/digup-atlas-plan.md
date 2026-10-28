@@ -1,4 +1,4 @@
-# DigUp Atlas plan
+# Farshelf plan
 
 Turn the DigUp fork into a macOS digital asset map for people who need to understand files across local and external volumes. Keep semantic suggestions separate from user decisions. Deliver D0, D1, D2, D3, and D4 in order. Do not delete, move, rename, or upload user files in this program.
 
@@ -63,7 +63,7 @@ Tests alone are not sufficient verification. A PR is verified only when its unit
 Each live lane runs on its own isolated macOS VM at the PR head. Cursor cloud VMs and control skills are unavailable in Kimi Code. Use a macOS VM with Xcode 26 or later, ffmpeg, accessibility permission, and the pinned model files. Allow network access for the initial Homebrew and model downloads, then disable it for offline lanes. Drive the real app through `scripts/ui/drive.sh`, which uses AppleScript, Accessibility, and `screencapture`.
 
 - [ ] `git fetch origin <head-branch> && git checkout <head SHA>`.
-- [ ] Reuse the build for the head SHA. The shared store is `/tmp/swarm-shared/build/<head-sha>`, on the host, mounted into every lane; a per-PR or per-lane path cannot work because each lane runs in its own VM and `/tmp` there is private. Build only when that directory is absent: `scripts/build-llama.sh && swift build -c release && swift test && ./build.sh`, then copy `build.noindex/DigUpAtlas.app` and `.build` into it. A different head SHA gets a different directory, so a review-fix head never reuses the previous head's artifacts. Rebuilding the same head on every lane repeats the llama.cpp compile ten times per stage for no added verification. Open `build.noindex/DigUpAtlas.app` and wait for the main window's accessibility identifier.
+- [ ] Reuse the build for the head SHA. The shared store is `/tmp/swarm-shared/build/<head-sha>`, on the host, mounted into every lane; a per-PR or per-lane path cannot work because each lane runs in its own VM and `/tmp` there is private. Build only when that directory is absent: `scripts/build-llama.sh && swift build -c release && swift test && ./build.sh`, then copy `build.noindex/Farshelf.app` and `.build` into it. A different head SHA gets a different directory, so a review-fix head never reuses the previous head's artifacts. Rebuilding the same head on every lane repeats the llama.cpp compile ten times per stage for no added verification. Open `build.noindex/Farshelf.app` and wait for the main window's accessibility identifier.
 - [ ] Deliver user input only through `scripts/ui/drive.sh`. Use `sqlite3 -readonly`, `log show`, `stat`, `hdiutil`, and process inspection as read-only diagnostics. Create test volumes and fixture files only inside the lane's scratch directory.
 - [ ] Save every screenshot to `/tmp/swarm-<pr-id>/worker-<n>/<slug>.png` and return the paths with the report.
 
@@ -88,7 +88,7 @@ Each live lane runs on its own isolated macOS VM at the PR head. Cursor cloud VM
 
 **Build.**
 
-- [ ] Set the display name to `DigUp Atlas`, replace the bundle identifier and UserDefaults domain, and keep the SwiftPM target names unchanged.
+- [ ] Set the display name to `Farshelf`, replace the bundle identifier and UserDefaults domain, and keep the SwiftPM target names unchanged.
 - [ ] Use independent application-support, index, model, and development-defaults locations. Never write to upstream DigUp locations.
 - [ ] Remove the upstream Sparkle feed and public key from the active configuration. Disable updater startup and remove or disable update controls until the fork has its own signed feed.
 - [ ] Preserve `LICENSE` and all required bundled-code notices in the packaged app. Remove notices only for components that are no longer distributed.
@@ -99,7 +99,7 @@ Each live lane runs on its own isolated macOS VM at the PR head. Cursor cloud VM
 
 **You see.**
 
-- [ ] The packaged app launches as `DigUp Atlas` and never contacts the upstream update feed.
+- [ ] The packaged app launches as `Farshelf` and never contacts the upstream update feed.
 - [ ] The UI driver captures a semantic search result without changing the fixture files.
 
 **Verify, unit.** Tests alone are not sufficient verification. A PR is verified only when its unit, live, and perf boxes are all checked.

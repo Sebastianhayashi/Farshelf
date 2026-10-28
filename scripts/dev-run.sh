@@ -1,10 +1,10 @@
 #!/bin/bash
-# Launches build.noindex/DigUpAtlas.app against the testbed with a scratch index, models folder and settings under
+# Launches build.noindex/Farshelf.app against the testbed with a scratch index, models folder and settings under
 # .dev/ and a separate defaults suite: never real folders, never the real index, model or settings. Extra launch
 # arguments pass through, e.g.
 #   scripts/dev-run.sh -debugQuery "zebra" -debugSnapshot /tmp/panel.png -debugQuit YES
 # ROOTS=a:b:c overrides the folders (keep them inside the testbed); ROOTS= (empty) launches with none, as a fresh
-# install would. INDEX, MODELS and SUITE override the rest; APP=/Applications/DigUpAtlas.app runs an installed copy
+# install would. INDEX, MODELS and SUITE override the rest; APP=/Applications/Farshelf.app runs an installed copy
 # the same way. The app's log is <index>/app.log.
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -22,10 +22,10 @@ if [[ "$MODELS" == "$PWD/.dev/models" ]]; then
   done
 fi
 
-# Only an earlier run of this same copy is stopped: an installed DigUp Atlas in use keeps running.
-APP="${APP:-build.noindex/DigUpAtlas.app}"
-EXE="$(cd "$APP" && pwd -P)/Contents/MacOS/DigUpAtlas"
-for pid in $(pgrep -x DigUpAtlas); do
+# Only an earlier run of this same copy is stopped: an installed Farshelf in use keeps running.
+APP="${APP:-build.noindex/Farshelf.app}"
+EXE="$(cd "$APP" && pwd -P)/Contents/MacOS/Farshelf"
+for pid in $(pgrep -x Farshelf); do
   [[ "$(ps -o comm= -p "$pid")" == "$EXE" ]] && kill "$pid" && sleep 0.5
 done
 ARGS=(-indexDir "$INDEX" -modelsDir "$MODELS" -defaultsSuite "$SUITE")

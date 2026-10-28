@@ -46,7 +46,7 @@ final class SearchWindowController: NSObject, NSWindowDelegate {
         window.toolbarStyle = .unified
         window.titlebarAppearsTransparent = true
         window.titleVisibility = .hidden
-        window.title = "DigUp Atlas"
+        window.title = "Farshelf"
         window.setAccessibilityIdentifier("digupatlas.searchWindow")
         window.minSize = NSSize(width: 820, height: 520)
         window.isReleasedWhenClosed = false
@@ -426,7 +426,7 @@ struct SearchWindowView: View {
             VStack(spacing: 0) {
                 BrandMark()
                 Text("Choose folders to search").font(.system(size: 20, weight: .bold)).padding(.top, 18)
-                Text("DigUp Atlas only looks where you tell it to.")
+                Text("Farshelf only looks where you tell it to.")
                     .font(.system(size: 13))
                     .foregroundStyle(.secondary)
                     .padding(.top, 6)
@@ -736,7 +736,7 @@ private struct CodeOffOrHint: View {
                 .foregroundStyle(Brand.gradient)
             if phase == .codeOff {
                 Text("Code search is off").font(.system(size: 17, weight: .semibold))
-                Text("DigUp Atlas can find code by what it does, in the folders you pick. Code gets an index of its own and "
+                Text("Farshelf can find code by what it does, in the folders you pick. Code gets an index of its own and "
                      + "never shows up in other searches.")
                     .font(.system(size: 13))
                     .foregroundStyle(.secondary)
@@ -879,7 +879,7 @@ private struct SearchHome: View {
                 if let hotkey = model.hotkey {
                     HStack(spacing: 6) {
                         Keycaps(caps: hotkey.caps, size: 10)
-                        Text("opens DigUp Atlas from any app")
+                        Text("opens Farshelf from any app")
                     }
                 }
             }

@@ -1,5 +1,5 @@
 #!/bin/bash
-# Builds build.noindex/DigUpAtlas.app, signed with the hardened runtime (as releases are, so dev builds behave the same).
+# Builds build.noindex/Farshelf.app, signed with the hardened runtime (as releases are, so dev builds behave the same).
 #   ./build.sh                       signed with the identity named in .sign-id (one line, gitignored), so macOS keeps
 #                                    folder permissions across rebuilds; ad-hoc without it (macOS then asks again
 #                                    after each build)
@@ -11,7 +11,7 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
-APP_NAME="DigUpAtlas"
+APP_NAME="Farshelf"
 # ".noindex" keeps Spotlight (and the Apps list) from showing this staging copy.
 APP="build.noindex/$APP_NAME.app"
 
