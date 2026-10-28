@@ -38,7 +38,7 @@ Tests alone are not sufficient verification. A PR is verified only when its unit
   - [ ] D2 after D1.
   - [ ] D3 after D2.
   - [ ] D4 after D3.
-- [ ] Hold the file boundaries. D0 touches only the project plan, app identity, update-channel behavior, build scripts, and UI verification files. D1 touches only inventory, identity, sync, and their UI files. D2 touches only stable tags and their UI files. D3 touches only semantic suggestions, evaluations, and their UI files. D4 touches only offline availability, preview storage, and their UI files.
+- [ ] Hold the file boundaries. D0 touches only the project plan, user documentation, app identity and data isolation, update-channel behavior, development and release scripts, and UI verification files. D1 touches only inventory, identity, sync, and their UI files. D2 touches only stable tags and their UI files. D3 touches only semantic suggestions, evaluations, and their UI files. D4 touches only offline availability, preview storage, and their UI files.
 - [ ] Hold the review gate. D0, D1, D2, D3, and D4 change an interaction. They wait for the operator's review in chat with screenshots and a video before merge.
 
 ### PR mechanics, for every PR
@@ -72,23 +72,28 @@ Each live lane runs on its own isolated macOS VM at the PR head. Cursor cloud VM
 **Files.**
 
 - [ ] Create `docs/digup-atlas-plan.md`.
-- [ ] Edit `Resources/Info.plist`.
-- [ ] Edit `Sources/DigUpApp/AppSettings.swift`.
-- [ ] Edit `Sources/DigUpApp/Updates.swift`.
-- [ ] Edit `Sources/DigUpApp/AppController.swift`.
-- [ ] Edit `Sources/DigUpApp/StatusMenu.swift`.
-- [ ] Edit `Sources/DigUpApp/SettingsWindow.swift`.
-- [ ] Edit `build.sh`.
+- [ ] Edit `README.md`.
+- [ ] Edit `Package.swift` and remove `Package.resolved` when the Sparkle dependency leaves.
+- [ ] Edit `.gitignore`.
+- [ ] Edit `Resources/Info.plist` and `Resources/Acknowledgements.txt`.
+- [ ] Edit `Sources/DigUpApp/App.swift`, `AppSettings.swift`, `AppController.swift`, `AddFolders.swift`, `FolderChoices.swift`, `Onboarding.swift`, `SearchPanelView.swift`, `SearchWindow.swift`, `SettingsWindow.swift`, `StatusMenu.swift`, and `DebugHooks.swift`.
+- [ ] Delete `Sources/DigUpApp/Updates.swift`.
+- [ ] Edit `Sources/DigUpKit/Platform/Portable.swift`.
+- [ ] Edit `build.sh`, `scripts/dev-run.sh`, `scripts/release.sh`, and `scripts/appcast.py`.
 - [ ] Create `scripts/ui/drive.sh`.
+- [ ] Create `.github/workflows/ui-verification.yml` for disposable macOS VM lanes.
 - [ ] Create `scripts/verify-fork.sh`.
 - [ ] Create `Tests/DigUpKitTests/ForkIdentityTests.swift`.
 
 **Build.**
 
 - [ ] Set the display name to `DigUp Atlas`, replace the bundle identifier and UserDefaults domain, and keep the SwiftPM target names unchanged.
+- [ ] Use independent application-support, index, model, and development-defaults locations. Never write to upstream DigUp locations.
 - [ ] Remove the upstream Sparkle feed and public key from the active configuration. Disable updater startup and remove or disable update controls until the fork has its own signed feed.
-- [ ] Preserve `LICENSE` and `Resources/Acknowledgements.txt`, and include both in the packaged app.
+- [ ] Preserve `LICENSE` and all required bundled-code notices in the packaged app. Remove notices only for components that are no longer distributed.
 - [ ] Add accessibility identifiers and a UI driver that can launch the app, select a fixture root, run a search, and capture the result.
+- [ ] Give the driver an explicit fresh-login window mode, accurate permission preflight, and complete app and helper cleanup on success, failure, and interruption.
+- [ ] Update the development, release, and user-documentation paths for the new app identity and disabled update feed.
 - [ ] Keep the existing cross-platform source intact. Limit product support and verification to macOS.
 
 **You see.**
@@ -98,13 +103,13 @@ Each live lane runs on its own isolated macOS VM at the PR head. Cursor cloud VM
 
 **Verify, unit.** Tests alone are not sufficient verification. A PR is verified only when its unit, live, and perf boxes are all checked.
 
-- [ ] Add `ForkIdentityTests` for independent defaults and disabled upstream updates. Run `scripts/verify-fork.sh && swift test --filter ForkIdentityTests` and then `swift test`.
+- [ ] Add `ForkIdentityTests` for independent defaults, data directories, disabled upstream updates, and renamed development and release paths. Run `scripts/verify-fork.sh && swift test --filter ForkIdentityTests` and then `swift test`.
 
 **Verify, live.** Tests alone are not sufficient verification. A PR is verified only when its unit, live, and perf boxes are all checked. Ten lanes on `k2.8-high` at the PR head, per the boot recipe.
 
 - [ ] Lane 1. Regression lane against trunk. Run `scripts/make-testbed.sh`, index the same fixture, and search for `football` at trunk and head. Save `fork-regression.png`. Pass when both return the same fixture asset and the head shows the new app identity.
 - [ ] Lane 2. Launch the packaged app with no existing defaults. Save `fork-clean-launch.png`. Pass when the main window appears and no setup error mentions Sparkle.
-- [ ] Lane 3. Seed upstream UserDefaults with a sentinel and launch the fork. Save `fork-defaults.png`. Pass when the fork has no sentinel and the upstream value is unchanged.
+- [ ] Lane 3. Seed upstream UserDefaults and application-support files with sentinels, then launch the fork with default paths. Save `fork-defaults.png`. Pass when the fork uses `DigUpAtlas` locations and every upstream sentinel remains unchanged.
 - [ ] Lane 4. Inspect the packaged license and acknowledgements through the driver. Save `fork-licenses.png`. Pass when the original MIT copyright and bundled-code notices are present.
 - [ ] Lane 5. Run the update check with network logging enabled. Save `fork-updates.png`. Pass when no request targets `ARahim3/DigUp` and the app remains usable offline.
 - [ ] Lane 6. Index a read-only fixture directory. Save `fork-read-only.png`. Pass when every source file's size, modification time, and content hash remains unchanged.
@@ -151,8 +156,11 @@ Each live lane runs on its own isolated macOS VM at the PR head. Cursor cloud VM
 **Build.**
 
 - [ ] Define `AssetID`, `VolumeID`, `AssetLocation`, and `Availability` with states `available`, `unavailable`, and `deleted`. Never use a path as an asset ID.
-- [ ] Migrate `files` to carry a persistent `asset_uuid`, and add volume metadata keyed by a volume UUID where macOS provides one. Preserve `asset_uuid` through `IndexStore.move` and content requeue. Compute a content fingerprint only for ambiguous delete-and-reinsert cases, and reuse the prior ID only when volume and content evidence match.
+- [ ] Give asset identity its own persistent table. `files` stays a rebuildable index: its rows are keyed by a unique path, `segments` cascade from it, and `IndexStore.delete` removes a row. An `asset_uuid` column on `files` would therefore be destroyed by any row deletion, taking user decisions with it. Keep a tombstone row per asset that is gone, so derived index rows can be deleted without losing identity.
+- [ ] Add volume metadata keyed by a volume UUID where macOS provides one. Preserve the asset identity through `IndexStore.move` and content requeue. Retain identity evidence from first sight rather than computing it only when a collision appears: by then the prior content may no longer be readable, so there would be nothing to compare.
+- [ ] Track scan completeness per reconciled subtree. A subtree is trusted only when it was enumerated completely. An unreadable, interrupted, or disconnected subtree is unverified and can never confirm a deletion. Today `Indexer.sync` protects only a root that vanished entirely; `Crawler` swallows a directory-level read failure at `errorHandler: { _, _ in true }` and continues, so files under a live-but-unreadable subdirectory would be deleted as absent.
 - [ ] Build `AssetInventory` as a read-only API over file, location, scan-state, and volume data. Do not change `segments` or trigger embedding for inventory reads.
+- [ ] Record every ordinary file in a completely enumerated, non-excluded scope as an asset, whether or not its type is eligible for semantic embedding. Today `Crawler` records unsupported types only as an aggregate skip count (`leftOut("other type")`), with no per-file record, so wrapping `IndexStore.files` cannot satisfy this.
 - [ ] Persist FSEvents event IDs and handle rescan flags. Reconcile missed events with metadata scans without re-embedding unchanged content.
 - [ ] Add an inventory view that groups assets by kind and volume and distinguishes discovered, analyzed, unreadable, and unavailable items.
 - [ ] Keep deletion, file moves, renaming, and cleanup actions out of the UI.
@@ -164,20 +172,20 @@ Each live lane runs on its own isolated macOS VM at the PR head. Cursor cloud VM
 
 **Verify, unit.** Tests alone are not sufficient verification. A PR is verified only when its unit, live, and perf boxes are all checked.
 
-- [ ] Add `AssetIdentityTests` for same-volume moves, copies, content edits, inode reuse guards, and volume remounts. Run `swift test --filter AssetIdentityTests`.
-- [ ] Add `AssetInventoryTests` for availability, unreadable files, vanished roots, event replay, Unicode paths, and zero embedding on metadata-only reconciliation. Run `swift test --filter AssetInventoryTests` and then `swift test`.
+- [ ] Add `AssetIdentityTests` for same-volume moves, copies, content edits, inode reuse guards, volume remounts, and a deleted index row leaving the asset identity and its tombstones intact. Run `swift test --filter AssetIdentityTests`.
+- [ ] Add `AssetInventoryTests` for availability, unreadable files, vanished roots, a readable root containing an unreadable subdirectory, incomplete subtrees never confirming deletion, inventory records for types that are not semantically indexed, event replay, Unicode paths, and zero embedding on metadata-only reconciliation. Run `swift test --filter AssetInventoryTests` and then `swift test`.
 
 **Verify, live.** Tests alone are not sufficient verification. A PR is verified only when its unit, live, and perf boxes are all checked. Ten lanes on `k2.8-high` at the PR head, per the boot recipe.
 
 - [ ] Lane 1. Regression lane against trunk. Index the standard testbed and run the same semantic query at trunk and head. Save `inventory-regression.png`. Pass when the head preserves the trunk result and also lists the asset in the inventory.
-- [ ] Lane 2. Index a manifest-backed fixture with 20,000 files. Save `inventory-complete.png`. Pass when the inventory counts match the manifest by kind and scan state.
+- [ ] Lane 2. Index a manifest-backed fixture with 20,000 files. Save `inventory-complete.png`. Pass when the inventory counts match the manifest by kind and scan state, and every ordinary file inside the fully enumerated, non-excluded scope has an asset record — including types that are never semantically indexed, which must appear as inventory-only rather than as a skip count.
 - [ ] Lane 3. Move 1,000 unchanged files within one test volume. Save `inventory-move.png`. Pass when every asset keeps its ID and the embedding counter remains unchanged.
 - [ ] Lane 4. Modify one indexed document. Save `inventory-edit.png`. Pass when only that asset receives new segments and its ID remains stable.
 - [ ] Lane 5. Detach a test DMG during an active scan. Save `inventory-eject.png`. Pass when its known assets become unavailable and no asset record is deleted.
-- [ ] Lane 6. Remount the same DMG at a different mount path. Save `inventory-remount.png`. Pass when existing assets become available without duplicate IDs or re-embedding unchanged files.
-- [ ] Lane 7. Change files while the app is stopped, then relaunch. Save `inventory-restart.png`. Pass when event replay or reconciliation produces the same inventory as a fresh metadata scan.
+- [ ] Lane 6. Remount the same DMG at a different mount path. Save `inventory-remount.png`. Pass when existing assets become available without duplicate IDs or re-embedding unchanged files. Repeat on a real exFAT disk image, not only the APFS-backed DMG: build an exFAT image with `hdiutil`, index it, eject, remount at a different path, and rename files on the host between mounts. Pass when every unchanged asset keeps its ID across the remount and rename, and no unchanged content is re-embedded. exFAT synthesises file identifiers that can change across mounts, so this is the case that decides whether the identity design actually works on the drives this product targets.
+- [ ] Lane 7. Change files while the app is stopped, then relaunch. Save `inventory-restart.png`. Quit the app, then add, modify, rename, and delete fixture files while it is not running. Pass when the relaunch reconciles all four kinds of change, unchanged assets keep their IDs, unchanged content is not re-embedded, and the same result is reached when event history is unavailable and the metadata reconciliation is the only path.
 - [ ] Lane 8. Add and rename files below a directory named `Photos.v2`. Save `inventory-dotted-path.png`. Pass when the watcher schedules the changes and the inventory matches the fixture.
-- [ ] Lane 9. Revoke read permission from one fixture directory. Save `inventory-unreadable.png`. Pass when the UI names the unreadable scope and preserves its last known records.
+- [ ] Lane 9. Revoke read permission from one subdirectory while its root stays readable. Save `inventory-unreadable.png`. Pass when the UI names the unreadable subtree, preserves its last known records, and deletes no asset under it. A whole directory being unreadable is not enough: the dangerous case is a root that is still present and readable with one unreadable subdirectory inside it, because the crawler swallows that failure and the missing results would otherwise read as deletions.
 - [ ] Lane 10. Index duplicate names with precomposed and decomposed Unicode paths. Save `inventory-unicode.png`. Pass when each real file has one inventory row and no unique-constraint error occurs.
 
 **Verify, perf.** Tests alone are not sufficient verification. A PR is verified only when its unit, live, and perf boxes are all checked.
@@ -348,7 +356,11 @@ Each live lane runs on its own isolated macOS VM at the PR head. Cursor cloud VM
 
 - [ ] Define `PreviewKind` for image thumbnails, video contact sheets, and representative document pages. Key each preview by asset ID and content version.
 - [ ] Store preview files and metadata on the Mac under the fork's application-support directory. Never copy an original asset into the preview cache.
-- [ ] Add per-volume preview modes for index only, standard previews, and enhanced previews. Enforce a user-set byte budget and report files without previews.
+- [ ] Generate and persist previews while the source is locally readable, from the initial scan or a connected-volume background pass. `QLThumbnailGenerator` needs a readable source URL, so a preview cannot be produced after the volume is gone and a later system-cache hit must not be relied on.
+- [ ] Never enqueue preview generation for an `index only` volume.
+- [ ] Show incomplete preview coverage before a volume is disconnected, and leave a preview that was never generated as visibly missing. Do not present it as cached.
+- [ ] Add per-volume preview modes for index only, standard previews, and enhanced previews. Enforce a byte budget and report files without previews.
+- [ ] Start with a default budget of 2 GiB shared across all sources, with 500 MB kept as the fixture-specific performance ceiling in the perf rule below. Take 2 GiB as a starting value to be revised from measured cache coverage, not as a proven fit for the target user.
 - [ ] Keep unavailable assets in search results with their volume name, last known path, tags, and available previews. Require reconnection before opening the original.
 - [ ] Invalidate stale previews after content changes and preserve confirmed tags when a preview is evicted.
 - [ ] Add a per-volume action that deletes only derived indexes and previews after explicit confirmation. Keep source files untouched.
@@ -361,7 +373,7 @@ Each live lane runs on its own isolated macOS VM at the PR head. Cursor cloud VM
 
 **Verify, unit.** Tests alone are not sufficient verification. A PR is verified only when its unit, live, and perf boxes are all checked.
 
-- [ ] Add `OfflinePreviewStoreTests` for cache keys, content invalidation, budgets, eviction, unavailable search, volume identity, cache deletion, cloud placeholders, and crash recovery. Run `swift test --filter OfflinePreviewStoreTests` and then `swift test`.
+- [ ] Add `OfflinePreviewStoreTests` for cache keys, content invalidation, budgets, eviction, unavailable search, volume identity, cache deletion, cloud placeholders, and crash recovery. Also cover generation only while the source is readable, no enqueued work for an index-only volume, an ungenerated preview reported as missing rather than cached, and the default 2 GiB budget applied across more than one source. Run `swift test --filter OfflinePreviewStoreTests` and then `swift test`.
 
 **Verify, live.** Tests alone are not sufficient verification. A PR is verified only when its unit, live, and perf boxes are all checked. Ten lanes on `k2.8-high` at the PR head, per the boot recipe.
 
@@ -371,7 +383,7 @@ Each live lane runs on its own isolated macOS VM at the PR head. Cursor cloud VM
 - [ ] Lane 4. Index PDFs and inspect representative pages offline. Save `offline-documents.png`. Pass when the user can identify each document without reading the original volume.
 - [ ] Lane 5. Remount a DMG at a different path and open a result. Save `offline-remount.png`. Pass when volume identity reconciles and the correct original opens without duplicate assets.
 - [ ] Lane 6. Modify one source file while the volume is connected. Save `offline-invalidate.png`. Pass when the old preview is invalidated and only the changed content is regenerated.
-- [ ] Lane 7. Set a 50 MB preview budget on a fixture that exceeds it. Save `offline-budget.png`. Pass when cache bytes stay within budget and the UI names assets without previews.
+- [ ] Lane 7. Set a 50 MB preview budget on a fixture that exceeds it. Save `offline-budget.png`. Pass when cache bytes stay within budget and the UI names assets without previews. Then run the same fixture with no explicit budget set, on two sources at once, and pass when the 2 GiB default applies across both together rather than per source, and the UI reports remaining budget.
 - [ ] Lane 8. Delete the derived cache for a disconnected volume. Save `offline-privacy.png`. Pass when previews and semantic data are removed while source files and user tags remain intact.
 - [ ] Lane 9. Kill the app during preview generation and relaunch. Save `offline-crash.png`. Pass when partial previews are discarded or completed idempotently and the database passes integrity checks.
 - [ ] Lane 10. Index a File Provider placeholder fixture while offline. Save `offline-placeholder.png`. Pass when no download starts and the asset is labeled as not stored locally.
